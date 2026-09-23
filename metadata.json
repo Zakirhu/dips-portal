@@ -1,0 +1,6 @@
+{
+  "name": "DIPS Centralized Learning & Content Sharing Portal",
+  "description": "Centralized learning management and subject-based content sharing platform for DIPS chain of schools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
