@@ -1,0 +1,304 @@
+{
+  "branches": [
+    {
+      "id": "branch-begowal",
+      "name": "DIPS Begowal",
+      "code": "BEG",
+      "city": "Begowal, Kapurthala",
+      "address": "Near Main GT Road, Begowal, Punjab",
+      "phone": "+91 1822 245100",
+      "principalName": "Mrs. Jaswinder Kaur",
+      "establishedYear": 2004,
+      "totalStudents": 0,
+      "totalTeachers": 0
+    },
+    {
+      "id": "branch-jalandhar",
+      "name": "DIPS Urban Estate Jalandhar",
+      "code": "JAL",
+      "city": "Jalandhar",
+      "address": "Phase-I, Urban Estate, Jalandhar, Punjab",
+      "phone": "+91 181 2284900",
+      "principalName": "Dr. Gurveen Kaur",
+      "establishedYear": 2001,
+      "totalStudents": 0,
+      "totalTeachers": 0
+    },
+    {
+      "id": "branch-gilzian",
+      "name": "DIPS Gilzian",
+      "code": "GIL",
+      "city": "Gilzian, Hoshiarpur",
+      "address": "Tanda-Gilzian Highway, Punjab",
+      "phone": "+91 1886 271220",
+      "principalName": "Mr. Harvinder Singh",
+      "establishedYear": 2008,
+      "totalStudents": 0,
+      "totalTeachers": 0
+    },
+    {
+      "id": "branch-nurmahal",
+      "name": "DIPS Nurmahal",
+      "code": "NUR",
+      "city": "Nurmahal, Jalandhar",
+      "address": "Kot Badal Khan Road, Nurmahal, Punjab",
+      "phone": "+91 1826 244510",
+      "principalName": "Mrs. Ritu Pathak",
+      "establishedYear": 2011,
+      "totalStudents": 0,
+      "totalTeachers": 0
+    },
+    {
+      "id": "branch-tanda",
+      "name": "DIPS Tanda",
+      "code": "TAN",
+      "city": "Urmar Tanda",
+      "address": "Near Bus Stand, Urmar Tanda, Punjab",
+      "phone": "+91 1886 223400",
+      "principalName": "Mrs. Seema Sharma",
+      "establishedYear": 2014,
+      "totalStudents": 0,
+      "totalTeachers": 0
+    }
+  ],
+  "classes": [
+    {
+      "id": "class-6",
+      "name": "Class VI",
+      "code": "VI",
+      "order": 6,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-7",
+      "name": "Class VII",
+      "code": "VII",
+      "order": 7,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-8",
+      "name": "Class VIII",
+      "code": "VIII",
+      "order": 8,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-9",
+      "name": "Class IX",
+      "code": "IX",
+      "order": 9,
+      "sections": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "class-10",
+      "name": "Class X",
+      "code": "X",
+      "order": 10,
+      "sections": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "class-11",
+      "name": "Class XI",
+      "code": "XI",
+      "order": 11,
+      "sections": [
+        "Medical",
+        "Non-Medical",
+        "Commerce",
+        "Humanities"
+      ]
+    },
+    {
+      "id": "class-12",
+      "name": "Class XII",
+      "code": "XII",
+      "order": 12,
+      "sections": [
+        "Medical",
+        "Non-Medical",
+        "Commerce",
+        "Humanities"
+      ]
+    }
+  ],
+  "subjects": [
+    {
+      "id": "sub-cs",
+      "name": "Computer Science & IT",
+      "code": "CS",
+      "department": "Information Technology",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10",
+        "class-11",
+        "class-12"
+      ],
+      "description": "Python, Programming Fundamentals, Data Structures, Web Technology, and CBSE IT curriculum."
+    },
+    {
+      "id": "sub-math",
+      "name": "Mathematics",
+      "code": "MATH",
+      "department": "Mathematics",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10",
+        "class-11",
+        "class-12"
+      ],
+      "description": "Algebra, Geometry, Calculus, Arithmetic, and Trigonometry."
+    },
+    {
+      "id": "sub-sci",
+      "name": "Science",
+      "code": "SCI",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "General Science covering Physics, Chemistry, and Life Sciences."
+    },
+    {
+      "id": "sub-eng",
+      "name": "English",
+      "code": "ENG",
+      "department": "Languages",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10",
+        "class-11",
+        "class-12"
+      ],
+      "description": "English Literature, Grammar, Reading Comprehension, and Creative Writing."
+    },
+    {
+      "id": "sub-sst",
+      "name": "Social Science",
+      "code": "SST",
+      "department": "Social Studies",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "History, Civics, Geography, Economics, and Disaster Management."
+    },
+    {
+      "id": "sub-phy",
+      "name": "Physics",
+      "code": "PHY",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Mechanics, Optics, Thermodynamics, Electromagnetism, Modern Physics."
+    },
+    {
+      "id": "sub-chem",
+      "name": "Chemistry",
+      "code": "CHEM",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Physical, Organic, and Inorganic Chemistry CBSE Curriculum."
+    }
+  ],
+  "academicSessions": [
+    {
+      "id": "sess-2026-27",
+      "name": "2026-27",
+      "startDate": "2026-04-01",
+      "endDate": "2027-03-31",
+      "isCurrent": true
+    },
+    {
+      "id": "sess-2025-26",
+      "name": "2025-26",
+      "startDate": "2025-04-01",
+      "endDate": "2026-03-31",
+      "isCurrent": false
+    }
+  ],
+  "users": [
+    {
+      "id": "user-admin",
+      "username": "dipsbegowal@gmail.com",
+      "email": "dipsbegowal@gmail.com",
+      "fullName": "DIPS Begowal Administration",
+      "role": "admin",
+      "branchId": "branch-begowal",
+      "branchName": "DIPS Begowal",
+      "isActive": true,
+      "createdAt": "2026-09-19T00:00:00.000Z",
+      "phone": "+91 1822 245100",
+      "passwordHash": "a8bf76b701e20cf0c59bc46940f520c78271c198462079480abb04baadcb9d25"
+    }
+  ],
+  "resources": [],
+  "announcements": [],
+  "notifications": [],
+  "activityLogs": [],
+  "settings": {
+    "directPublishing": true,
+    "maxUploadSizeMB": 50,
+    "allowedExtensions": [
+      "pdf",
+      "doc",
+      "docx",
+      "ppt",
+      "pptx",
+      "xls",
+      "xlsx",
+      "jpg",
+      "jpeg",
+      "png",
+      "zip",
+      "mp4",
+      "mp3"
+    ],
+    "activeSession": "2026-27",
+    "organizationName": "DIPS Institutions",
+    "portalSubtitle": "Centralized Learning & Resource Portal"
+  }
+}
