@@ -28,6 +28,7 @@ import {
   Bookmark,
   BookmarkCheck,
   Trash2,
+  MessageSquare,
 } from 'lucide-react';
 import type {
   User,
@@ -47,6 +48,7 @@ import {
 
 interface TeacherPortalProps {
   currentUser: User;
+  onUpdateUser?: (user: User) => void;
   onOpenUpload: (initialSubjectId?: string, initialClassId?: string) => void;
   onPreviewResource: (resource: Resource) => void;
   onOpenVersions: (resource: Resource) => void;
@@ -56,6 +58,7 @@ interface TeacherPortalProps {
 
 export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   currentUser,
+  onUpdateUser,
   onOpenUpload,
   onPreviewResource,
   onOpenVersions,
@@ -63,8 +66,132 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   onDownload,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'navigator' | 'library' | 'favorites' | 'my_uploads' | 'announcements' | 'profile'
+    'navigator' | 'library' | 'favorites' | 'my_uploads' | 'announcements' | 'chat' | 'profile'
   >('navigator');
+
+  interface ChatMessage {
+    id: string;
+    channelId: string;
+    senderId: string;
+    senderName: string;
+    senderBranchName?: string;
+    senderRole?: string;
+    content: string;
+    timestamp: string;
+    attachedResourceId?: string;
+    attachedResourceTitle?: string;
+  }
+
+  const CHAT_STORAGE_KEY = 'dips_teacher_chat_messages_v1';
+  const defaultChatMessages: ChatMessage[] = [
+    {
+      id: 'msg-1',
+      channelId: 'general',
+      senderId: 'admin-dir',
+      senderName: 'Academic Directorate',
+      senderBranchName: 'Central Directorate',
+      senderRole: 'Coordinator',
+      content: 'Welcome educators to the DIPS Cross-Branch Teacher Discussion Network! Feel free to discuss lesson plans, syllabi, and teaching strategies across all 21 campuses.',
+      timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
+    },
+    {
+      id: 'msg-2',
+      channelId: 'syllabus',
+      senderId: 't-1',
+      senderName: 'Mrs. Simranjit Kaur',
+      senderBranchName: 'DIPS School, Jalandhar (Urban Estate)',
+      senderRole: 'teacher',
+      content: 'Colleagues, has everyone uploaded their Class X Mathematics Chapter 4 practice worksheets for cross-branch review?',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: 'msg-3',
+      channelId: 'assessments',
+      senderId: 't-2',
+      senderName: 'Mr. Rajesh Kumar',
+      senderBranchName: 'DIPS School, Amritsar',
+      senderRole: 'teacher',
+      content: 'Yes! Just uploaded the midterm sample paper with detailed answer keys in the shared library. You can attach and review it directly here.',
+      timestamp: new Date(Date.now() - 1800000).toISOString(),
+    },
+  ];
+
+  const [chatChannel, setChatChannel] = useState<'general' | 'syllabus' | 'assessments' | 'labs'>('general');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return defaultChatMessages;
+  });
+  const [chatInput, setChatInput] = useState('');
+  const [selectedAttachmentId, setSelectedAttachmentId] = useState<string>('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages));
+    } catch (e) {}
+  }, [chatMessages]);
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === CHAT_STORAGE_KEY && e.newValue) {
+        try {
+          setChatMessages(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+    const handleCustomChat = (e: any) => {
+      if (e.detail) {
+        try {
+          const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+          if (saved) setChatMessages(JSON.parse(saved));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('dips_chat_updated', handleCustomChat);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('dips_chat_updated', handleCustomChat);
+    };
+  }, []);
+
+  const handleSendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    let attachedTitle = undefined;
+    if (selectedAttachmentId) {
+      const resFound = resources.find((r) => r.id === selectedAttachmentId);
+      if (resFound) attachedTitle = resFound.title;
+    }
+
+    const newMessage: ChatMessage = {
+      id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      channelId: chatChannel,
+      senderId: currentUser.id,
+      senderName: currentUser.fullName,
+      senderBranchName: currentUser.branchName || 'DIPS Branch',
+      senderRole: currentUser.role,
+      content: chatInput.trim(),
+      timestamp: new Date().toISOString(),
+      attachedResourceId: selectedAttachmentId || undefined,
+      attachedResourceTitle: attachedTitle,
+    };
+
+    const updated = [...chatMessages, newMessage];
+    setChatMessages(updated);
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('dips_chat_updated', { detail: { messages: updated } }));
+    } catch (err) {}
+
+    setChatInput('');
+    setSelectedAttachmentId('');
+  };
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
@@ -72,6 +199,20 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [teacherStats, setTeacherStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  // Profile edit state
+  const [profileFullName, setProfileFullName] = useState(currentUser.fullName);
+  const [profilePhone, setProfilePhone] = useState(currentUser.phone || '');
+  const [profileDesignation, setProfileDesignation] = useState(currentUser.designation || '');
+  const [assignedSubjectIds, setAssignedSubjectIds] = useState<string[]>(currentUser.assignedSubjectIds || []);
+  const [assignedClassIds, setAssignedClassIds] = useState<string[]>(currentUser.assignedClassIds || []);
+  const [profileMsg, setProfileMsg] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Quick subject/class creation state
+  const [newSubjectInput, setNewSubjectInput] = useState('');
+  const [newClassInput, setNewClassInput] = useState('');
 
   // Bookmarks state
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() =>
@@ -103,6 +244,80 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
     setTimeout(() => {
       setToastMsg((cur) => (cur === msg ? null : cur));
     }, 2500);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    setProfileMsg('');
+    setProfileError('');
+    try {
+      const res = await api.updateProfile({
+        fullName: profileFullName,
+        phone: profilePhone,
+        designation: profileDesignation,
+        assignedSubjectIds,
+        assignedClassIds,
+      });
+      if (onUpdateUser) {
+        onUpdateUser(res.user);
+      }
+      setProfileMsg('Profile, assigned subjects, and classes updated successfully!');
+    } catch (err: any) {
+      setProfileError(err.message || 'Failed to update profile');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleCreateAndAssignSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubjectInput.trim()) return;
+    try {
+      const res = await api.createSubject({
+        name: newSubjectInput.trim(),
+        code: newSubjectInput.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5),
+        department: 'General',
+        applicableClasses: [],
+      });
+      setSubjects((prev) => [...prev, res.subject]);
+      setAssignedSubjectIds((prev) => [...prev, res.subject.id]);
+      setNewSubjectInput('');
+      showToast(`Created and assigned subject "${res.subject.name}"`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create subject');
+    }
+  };
+
+  const handleCreateAndAssignClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClassInput.trim()) return;
+    try {
+      const res = await api.createClass({
+        name: newClassInput.trim(),
+        code: newClassInput.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 5),
+        order: classes.length + 1,
+        sections: ['A', 'B'],
+      });
+      setClasses((prev) => [...prev, res.class]);
+      setAssignedClassIds((prev) => [...prev, res.class.id]);
+      setNewClassInput('');
+      showToast(`Created and assigned class "${res.class.name}"`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create class');
+    }
+  };
+
+  const handleDeleteResource = async (res: Resource) => {
+    if (window.confirm(`Are you sure you want to delete "${res.title}"? This will permanently remove the resource if uploaded by mistake.`)) {
+      try {
+        await api.deleteResource(res.id);
+        setResources((prev) => prev.filter((r) => r.id !== res.id));
+        showToast(`Successfully deleted "${res.title}"`);
+      } catch (err: any) {
+        alert(err.message || 'Failed to delete resource');
+      }
+    }
   };
 
   const handleToggleBookmark = (res: Resource) => {
@@ -368,6 +583,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
             badgeColor: 'text-amber-500',
           },
           { id: 'my_uploads', label: `My Contributions (${myUploads.length})`, icon: FileText },
+          { id: 'chat', label: 'Cross-Branch Teacher Chat', icon: MessageSquare },
           { id: 'announcements', label: 'School Announcements', icon: Users },
           { id: 'profile', label: 'Profile & Security', icon: ShieldCheck },
         ].map((tab) => {
@@ -1274,6 +1490,14 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                       >
                         <Download className="w-4 h-4" />
                       </button>
+
+                      <button
+                        onClick={() => handleDeleteResource(res)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete resource (if uploaded by mistake)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -1319,79 +1543,400 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
         </div>
       )}
 
-      {/* 6. PROFILE & CHANGE PASSWORD */}
-      {activeTab === 'profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Profile Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Teacher Profile Information</h3>
-            <div className="space-y-2 text-xs text-slate-700">
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Full Name:</span>
-                <span className="font-bold text-slate-900">{currentUser.fullName}</span>
+      {/* 5.5 CROSS-BRANCH TEACHER DISCUSSION CHAT */}
+      {activeTab === 'chat' && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Sidebar: Channels & Branch Info */}
+          <div className="space-y-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Discussion Channels</h3>
+                <p className="text-[11px] text-slate-500">Real-time collaboration across all 21 DIPS campuses</p>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Employee ID:</span>
-                <span className="font-mono font-bold text-slate-900">{currentUser.employeeId}</span>
+
+              <div className="space-y-1">
+                {[
+                  { id: 'general', name: '🌐 General Collaboration', desc: 'General faculty discussions' },
+                  { id: 'syllabus', name: '📚 Syllabus & Lesson Plans', desc: 'Curriculum & pacing guides' },
+                  { id: 'assessments', name: '📝 Question Banks & Exams', desc: 'Mid-terms & sample papers' },
+                  { id: 'labs', name: '🔬 Science & STEM Labs', desc: 'Practical manuals & kits' },
+                ].map((ch) => (
+                  <button
+                    key={ch.id}
+                    onClick={() => setChatChannel(ch.id as any)}
+                    className={`w-full text-left p-3 rounded-xl transition-all cursor-pointer ${
+                      chatChannel === ch.id
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{ch.name}</div>
+                    <div className={`text-[10px] ${chatChannel === ch.id ? 'text-indigo-100' : 'text-slate-400'}`}>
+                      {ch.desc}
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Campus Branch:</span>
-                <span className="font-semibold text-slate-900">{currentUser.branchName}</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-900 space-y-2">
+              <div className="font-bold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span>Cross-Branch Sync Active</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Designation:</span>
-                <span>{currentUser.designation || 'Faculty Member'}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Assigned Subjects:</span>
-                <span className="font-semibold text-indigo-700">
-                  {assignedSubjects.map((s) => s.name).join(', ')}
-                </span>
-              </div>
+              <p className="text-[11px] text-indigo-700 leading-relaxed">
+                Messages update instantly across all active DIPS branch teacher portals. You can attach any shared resource directly to your message for peer review.
+              </p>
             </div>
           </div>
 
-          {/* Change Password Card */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Change Account Password</h3>
-            {passwordMsg && (
-              <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200">
-                {passwordMsg}
+          {/* Right Main Chat Panel */}
+          <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col h-[650px]">
+            {/* Chat Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                  {chatChannel === 'general' ? '🌐' : chatChannel === 'syllabus' ? '📚' : chatChannel === 'assessments' ? '📝' : '🔬'}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 capitalize">
+                    {chatChannel === 'general' && 'General Collaboration Channel'}
+                    {chatChannel === 'syllabus' && 'Syllabus & Lesson Plans Discussion'}
+                    {chatChannel === 'assessments' && 'Question Banks & Assessments Hub'}
+                    {chatChannel === 'labs' && 'Science & STEM Labs Forum'}
+                  </h4>
+                  <p className="text-[11px] text-slate-500">Connected with educators across 21 DIPS campuses</p>
+                </div>
               </div>
-            )}
-            {passwordError && (
-              <div className="p-3 bg-rose-50 text-rose-800 text-xs rounded-lg border border-rose-200">
-                {passwordError}
+              <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-medium border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Feed</span>
               </div>
-            )}
-            <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Current Password</label>
+            </div>
+
+            {/* Messages Scroll Area */}
+            <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+              {chatMessages
+                .filter((m) => m.channelId === chatChannel)
+                .map((msg) => {
+                  const isSelf = msg.senderId === currentUser.id;
+                  return (
+                    <div key={msg.id} className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'} space-y-1`}>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 px-1">
+                        <span className="font-bold text-slate-800">{msg.senderName}</span>
+                        {msg.senderBranchName && (
+                          <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">
+                            {msg.senderBranchName}
+                          </span>
+                        )}
+                        <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+
+                      <div
+                        className={`max-w-xl p-4 rounded-2xl text-xs leading-relaxed shadow-xs ${
+                          isSelf
+                            ? 'bg-indigo-600 text-white rounded-tr-xs'
+                            : 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs'
+                        }`}
+                      >
+                        <p>{msg.content}</p>
+
+                        {msg.attachedResourceTitle && (
+                          <div className={`mt-2.5 p-2.5 rounded-xl border flex items-center gap-2 text-[11px] ${
+                            isSelf ? 'bg-indigo-700/60 border-indigo-500 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}>
+                            <BookOpen className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                            <div className="truncate font-semibold">Attached Resource: {msg.attachedResourceTitle}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Chat Input Bar */}
+            <form onSubmit={handleSendChatMessage} className="p-4 border-t border-slate-200 bg-white rounded-b-2xl space-y-3">
+              {selectedAttachmentId && (
+                <div className="flex items-center justify-between bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs text-indigo-900">
+                  <div className="flex items-center gap-2 truncate">
+                    <BookOpen className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Attached: <strong>{resources.find(r => r.id === selectedAttachmentId)?.title}</strong></span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAttachmentId('')}
+                    className="text-indigo-600 hover:text-indigo-800 text-[11px] font-bold cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedAttachmentId}
+                  onChange={(e) => setSelectedAttachmentId(e.target.value)}
+                  className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-700 max-w-[220px] truncate"
+                >
+                  <option value="">📎 Attach Subject Resource...</option>
+                  {accessibleResources.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.subjectName} - {r.title}
+                    </option>
+                  ))}
+                </select>
+
                 <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                  required
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Type a message to teachers across all 21 branches..."
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim()}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  <span>Send</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
-              >
-                Update Password
-              </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. PROFILE & ASSIGNED SUBJECTS / CLASSES MANAGEMENT */}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-600/10 via-indigo-500/5 to-transparent border border-indigo-200/60 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-black text-slate-900">Faculty Profile & Curriculum Assignments</h3>
+              <p className="text-xs text-slate-600">
+                Update your personal details, edit assigned subjects, assign academic classes, or add brand new subjects and classes to DIPS Central.
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200">
+              {currentUser.employeeId} • {currentUser.branchName}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Edit Profile & Assignments Form (2 columns) */}
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+              <h4 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <span>Edit Profile & Curriculum Scope</span>
+              </h4>
+
+              {profileMsg && (
+                <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200 font-medium">
+                  {profileMsg}
+                </div>
+              )}
+              {profileError && (
+                <div className="p-3 bg-rose-50 text-rose-800 text-xs rounded-lg border border-rose-200 font-medium">
+                  {profileError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={profileFullName}
+                      onChange={(e) => setProfileFullName(e.target.value)}
+                      className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={profilePhone}
+                      onChange={(e) => setProfilePhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Designation / Role Title</label>
+                  <input
+                    type="text"
+                    value={profileDesignation}
+                    onChange={(e) => setProfileDesignation(e.target.value)}
+                    placeholder="Senior PGT Mathematics Teacher"
+                    className="w-full px-3.5 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* Assigned Subjects Selection & Add Subject */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-800">Edit Assigned Subjects</label>
+                    <span className="text-[11px] text-slate-400">Select subjects you teach</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+                    {subjects.map((sub) => {
+                      const isAssigned = assignedSubjectIds.includes(sub.id);
+                      return (
+                        <label
+                          key={sub.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                            isAssigned ? 'bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold' : 'bg-white border border-slate-100 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isAssigned}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAssignedSubjectIds([...assignedSubjectIds, sub.id]);
+                              } else {
+                                setAssignedSubjectIds(assignedSubjectIds.filter((id) => id !== sub.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="truncate">{sub.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add New Subject */}
+                  <div className="flex gap-2 pt-2">
+                    <input
+                      type="text"
+                      placeholder="Add brand new subject (e.g. Artificial Intelligence)..."
+                      value={newSubjectInput}
+                      onChange={(e) => setNewSubjectInput(e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateAndAssignSubject}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg text-xs shrink-0 cursor-pointer"
+                    >
+                      + Add Subject
+                    </button>
+                  </div>
+                </div>
+
+                {/* Assigned Classes Selection & Add Class */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-800">Edit Assigned Classes</label>
+                    <span className="text-[11px] text-slate-400">Select classes you teach</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+                    {classes.map((cls) => {
+                      const isAssigned = assignedClassIds.includes(cls.id);
+                      return (
+                        <label
+                          key={cls.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                            isAssigned ? 'bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold' : 'bg-white border border-slate-100 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isAssigned}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAssignedClassIds([...assignedClassIds, cls.id]);
+                              } else {
+                                setAssignedClassIds(assignedClassIds.filter((id) => id !== cls.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span className="truncate">{cls.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add New Class */}
+                  <div className="flex gap-2 pt-2">
+                    <input
+                      type="text"
+                      placeholder="Add brand new class (e.g. Class 12-B)..."
+                      value={newClassInput}
+                      onChange={(e) => setNewClassInput(e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateAndAssignClass}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg text-xs shrink-0 cursor-pointer"
+                    >
+                      + Add Class
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isUpdatingProfile}
+                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {isUpdatingProfile ? 'Saving Changes...' : 'Save Profile & Assignments'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Change Password Card (1 column) */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 self-start">
+              <h4 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">Change Account Password</h4>
+              {passwordMsg && (
+                <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200">
+                  {passwordMsg}
+                </div>
+              )}
+              {passwordError && (
+                <div className="p-3 bg-rose-50 text-rose-800 text-xs rounded-lg border border-rose-200">
+                  {passwordError}
+                </div>
+              )}
+              <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  Update Password
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

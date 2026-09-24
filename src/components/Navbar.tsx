@@ -49,6 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<AppNotification | null>(null);
   const [bookmarkCount, setBookmarkCount] = useState<number>(() =>
     getBookmarkedResourceIds(currentUser.id).length
   );
@@ -464,6 +465,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                             );
                             setUnreadCount((c) => Math.max(0, c - 1));
                           }
+                          setSelectedNotification(n);
+                          setShowNotifs(false);
                         }}
                         className={`p-3 text-xs hover:bg-slate-50 cursor-pointer transition-colors ${
                           !n.isRead ? 'bg-indigo-50/40 font-medium' : ''
@@ -483,6 +486,64 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
           </div>
+
+          {/* Full Screen Notification Modal */}
+          {selectedNotification && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                      <Bell className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white">Full-Screen Notification Details</h3>
+                      <p className="text-xs text-slate-400">DIPS Centralized Curriculum & Announcement Alert</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedNotification(null)}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="p-6 sm:p-8 space-y-6 overflow-y-auto">
+                  <div className="space-y-2 border-b border-slate-100 pb-6">
+                    <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                      <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200 font-bold uppercase tracking-wider text-[11px]">
+                        {selectedNotification.type || 'System Alert'}
+                      </span>
+                      <span>
+                        {new Date(selectedNotification.createdAt).toLocaleDateString()}{' '}
+                        {new Date(selectedNotification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug pt-2">
+                      {selectedNotification.title}
+                    </h2>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Message Content</h4>
+                    <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-normal whitespace-pre-line">
+                      {selectedNotification.message}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button
+                      onClick={() => setSelectedNotification(null)}
+                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-colors cursor-pointer"
+                    >
+                      Close Fullscreen View
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* User Profile Menu */}
           <div className="relative">

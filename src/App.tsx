@@ -167,6 +167,7 @@ export default function App() {
         {isTeacher && (
           <TeacherPortal
             currentUser={currentUser}
+            onUpdateUser={setCurrentUser}
             onOpenUpload={(subId, clsId) => {
               setUploadInitialSubjectId(subId);
               setUploadInitialClassId(clsId);

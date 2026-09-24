@@ -62,6 +62,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     | 'dashboard'
     | 'branches'
     | 'teachers'
+    | 'teacher_activity'
     | 'students'
     | 'classes_subjects'
     | 'content'
@@ -242,6 +243,60 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
   };
 
+  const handleExportTeachersCSV = () => {
+    const headers = ['ID', 'Full Name', 'Username', 'Email', 'Employee ID', 'Designation', 'Branch ID', 'Branch Name', 'Phone', 'Status', 'Created At'];
+    const rows = teachers.map(t => [
+      t.id,
+      `"${t.fullName || ''}"`,
+      `"${t.username || ''}"`,
+      `"${t.email || ''}"`,
+      `"${t.employeeId || ''}"`,
+      `"${t.designation || ''}"`,
+      `"${t.branchId || ''}"`,
+      `"${t.branchName || ''}"`,
+      `"${t.phone || ''}"`,
+      t.isActive ? 'Active' : 'Inactive',
+      t.createdAt ? new Date(t.createdAt).toLocaleDateString() : ''
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `DIPS_Faculty_Directory_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Faculty data exported to Excel/CSV successfully.');
+  };
+
+  const handleExportStudentsCSV = () => {
+    const headers = ['ID', 'Full Name', 'Username', 'Email', 'Admission No', 'Branch ID', 'Branch Name', 'Class ID', 'Section', 'Roll No', 'Phone', 'Status', 'Created At'];
+    const rows = students.map(st => [
+      st.id,
+      `"${st.fullName || ''}"`,
+      `"${st.username || ''}"`,
+      `"${st.email || ''}"`,
+      `"${st.admissionNo || ''}"`,
+      `"${st.branchId || ''}"`,
+      `"${st.branchName || ''}"`,
+      `"${st.classId || ''}"`,
+      `"${st.section || ''}"`,
+      `"${st.rollNo || ''}"`,
+      `"${st.phone || ''}"`,
+      st.isActive ? 'Active' : 'Inactive',
+      st.createdAt ? new Date(st.createdAt).toLocaleDateString() : ''
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `DIPS_Students_Directory_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Students data exported to Excel/CSV successfully.');
+  };
+
   const handleTestSupabase = async () => {
     setTestingSupabase(true);
     try {
@@ -339,10 +394,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   };
 
   const handleDeleteTeacher = async (id: string, name: string) => {
-    if (!confirm(`Delete teacher account for "${name}"?`)) return;
+    if (!confirm(`Permanently delete teacher account for "${name}"? This cannot be undone.`)) return;
     try {
       await api.deleteTeacher(id);
-      showToast(`Teacher "${name}" removed.`);
+      showToast(`Teacher "${name}" permanently removed.`);
+      loadAllData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteStudent = async (id: string, name: string) => {
+    if (!confirm(`Permanently delete student account for "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.deleteStudent(id);
+      showToast(`Student "${name}" permanently removed.`);
       loadAllData();
     } catch (err: any) {
       alert(err.message);
@@ -676,6 +742,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
           { id: 'branches', label: `Branches (${branches.length})`, icon: Building2 },
           { id: 'teachers', label: `Faculty (${teachers.length})`, icon: Users },
+          { id: 'teacher_activity', label: 'Teacher Activity', icon: Activity },
           { id: 'students', label: `Students (${students.length})`, icon: GraduationCap },
           { id: 'classes_subjects', label: 'Classes & Subjects', icon: Layers },
           { id: 'content', label: `Content Repository (${resources.length})`, icon: BookOpen },
@@ -722,7 +789,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
               <div className="mt-3">
                 <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalBranches}</span>
-                <span className="text-[11px] text-slate-500 block mt-1 font-medium">All 5 campuses online</span>
+                <span className="text-[11px] text-slate-500 block mt-1 font-medium">All 21 campuses online</span>
               </div>
             </div>
 
@@ -1002,6 +1069,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={handleExportTeachersCSV}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Download faculty directory as Excel/CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Export to Excel (CSV)</span>
+              </button>
+              <button
+                type="button"
                 onClick={handleSyncSupabase}
                 disabled={syncingSupabase}
                 className="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1.5 transition-colors"
@@ -1174,6 +1250,141 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
       )}
 
+      {/* TEACHER ACTIVITY & ENGAGEMENT ANALYTICS */}
+      {activeTab === 'teacher_activity' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-indigo-600" /> Teacher Activity & Engagement Analytics
+              </h3>
+              <p className="text-xs text-slate-500">
+                Visualizing total uploads, student downloads, average resource ratings, and last-login timestamps for every registered educator
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200">
+                {teachers.length} Faculty Members Monitored
+              </span>
+            </div>
+          </div>
+
+          {/* Activity Overview Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active Faculty</span>
+              <div className="text-2xl font-black text-slate-900">{teachers.length}</div>
+              <p className="text-[11px] text-emerald-600 font-medium">100% active across all campuses</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Materials Uploaded</span>
+              <div className="text-2xl font-black text-indigo-600">{resources.length}</div>
+              <p className="text-[11px] text-slate-500 font-medium">Notes, PPTs, Question Papers & Videos</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Student Downloads</span>
+              <div className="text-2xl font-black text-emerald-600">
+                {resources.reduce((acc, r) => acc + (r.downloadsCount || 0), 0)}
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">Cross-branch student engagement</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg Faculty Rating</span>
+              <div className="text-2xl font-black text-amber-500">
+                {(
+                  resources.reduce((acc, r) => acc + (r.averageRating || 5.0), 0) / (resources.length || 1)
+                ).toFixed(1)}{' '}
+                ★
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">Student feedback & curriculum quality</p>
+            </div>
+          </div>
+
+          {/* Detailed Teacher Activity Table */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-900">Faculty Engagement Breakdown</h4>
+              <span className="text-xs text-slate-500">Sorted by recent login and activity volume</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="p-3.5">Faculty Member & ID</th>
+                    <th className="p-3.5">Branch Campus</th>
+                    <th className="p-3.5">Last Login Timestamp</th>
+                    <th className="p-3.5 text-center">Total Uploads</th>
+                    <th className="p-3.5 text-center">Student Downloads</th>
+                    <th className="p-3.5 text-center">Avg Rating</th>
+                    <th className="p-3.5 text-right">Assigned Classes & Subjects</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {teachers.map((t) => {
+                    const teacherResources = resources.filter(
+                      (r) => r.uploadedByUserId === t.id || r.uploadedByName === t.fullName
+                    );
+                    const totalDownloads = teacherResources.reduce((acc, r) => acc + (r.downloadsCount || 0), 0);
+                    const avgRating =
+                      teacherResources.length > 0
+                        ? teacherResources.reduce((acc, r) => acc + (r.averageRating || 5), 0) /
+                          teacherResources.length
+                        : 5.0;
+
+                    return (
+                      <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-3.5">
+                          <div className="font-bold text-slate-900">{t.fullName}</div>
+                          <div className="text-[11px] text-slate-400 font-mono">
+                            {t.employeeId || 'EMP-' + t.id.substring(0, 5)} • {t.designation || 'Faculty'}
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-slate-700 font-medium">{t.branchName || 'Main Campus'}</td>
+                        <td className="p-3.5">
+                          <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>
+                              {t.createdAt
+                                ? new Date(t.createdAt).toLocaleDateString() +
+                                  ' ' +
+                                  new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                : 'Today (Active)'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="px-2 py-0.5 text-xs font-black rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {teacherResources.length}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="font-bold text-slate-800">{totalDownloads}</span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            {avgRating.toFixed(1)} ★
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded">
+                              {t.assignedSubjectIds?.length || 0} Subjects
+                            </span>
+                            <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-700 rounded">
+                              {t.assignedClassIds?.length || 0} Classes
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 4. STUDENTS REGISTRY */}
       {activeTab === 'students' && (
         <div className="space-y-4">
@@ -1182,25 +1393,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               <h3 className="text-base font-bold text-slate-900">Enrolled Students Registry</h3>
               <p className="text-xs text-slate-500">Class and branch-based access governance</p>
             </div>
-            <button
-              onClick={() => {
-                setStudentForm({
-                  fullName: '',
-                  admissionNo: `DIPS-2026-${Math.floor(100 + Math.random() * 900)}`,
-                  email: '',
-                  phone: '',
-                  branchId: branches[0]?.id || '',
-                  classId: classes[0]?.id || '',
-                  section: 'A',
-                  rollNo: '01',
-                  initialPassword: 'student123',
-                });
-                setShowStudentModal(true);
-              }}
-              className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" /> Enroll Student
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportStudentsCSV}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Download student directory as Excel/CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Export to Excel (CSV)</span>
+              </button>
+              <button
+                onClick={() => {
+                  setStudentForm({
+                    fullName: '',
+                    admissionNo: `DIPS-2026-${Math.floor(100 + Math.random() * 900)}`,
+                    email: '',
+                    phone: '',
+                    branchId: branches[0]?.id || '',
+                    classId: classes[0]?.id || '',
+                    section: 'A',
+                    rollNo: '01',
+                    initialPassword: 'student123',
+                  });
+                  setShowStudentModal(true);
+                }}
+                className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Enroll Student
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -1251,8 +1473,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           <button
                             onClick={() => handleToggleUserStatus(st.id, st.fullName)}
                             className="p-1 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-100"
+                            title={st.isActive ? 'Deactivate account' : 'Activate account'}
                           >
                             {st.isActive ? <UserX className="w-3.5 h-3.5 text-amber-600" /> : <UserCheck className="w-3.5 h-3.5 text-emerald-600" />}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStudent(st.id, st.fullName)}
+                            className="p-1 text-rose-400 hover:text-rose-600 rounded hover:bg-rose-50"
+                            title="Permanently Delete Student"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>

@@ -12,6 +12,7 @@ import type {
   AdminStats,
   SystemSettings,
   ResourceVersion,
+  ResourceComment,
 } from '../types.js';
 
 const TOKEN_KEY = 'dips_portal_token';
@@ -160,6 +161,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ newPassword }),
     }),
+  updateProfile: (data: any) =>
+    request<{ success: boolean; user: User }>('/api/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 
   // Resources
   getResources: (params: Record<string, string> = {}) => {
@@ -199,6 +205,9 @@ export const api = {
       method: 'POST',
     }),
 
+  deleteResource: (id: string) =>
+    request<{ success: boolean }>(`/api/resources/${id}`, { method: 'DELETE' }),
+
   rateResource: (id: string, data: { rating: number; feedback?: string }) =>
     request<{
       success: boolean;
@@ -218,8 +227,14 @@ export const api = {
       ratingsCount: number;
     }>(`/api/resources/${id}/ratings`),
 
-  deleteResource: (id: string) =>
-    request<{ success: boolean }>(`/api/resources/${id}`, { method: 'DELETE' }),
+  addComment: (id: string, content: string) =>
+    request<{ success: boolean; resource: Resource; comment: ResourceComment }>(
+      `/api/resources/${id}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }
+    ),
 
   // Announcements
   getAnnouncements: () => request<{ announcements: Announcement[] }>('/api/announcements'),

@@ -545,7 +545,7 @@ export const GlobalAnnouncementBanner: React.FC<GlobalAnnouncementBannerProps> =
                     {selectedAnnouncement.targetBranchId
                       ? branches.find((b) => b.id === selectedAnnouncement.targetBranchId)?.name ||
                         selectedAnnouncement.targetBranchId
-                      : 'All 5 DIPS Campuses'}
+                      : 'All 21 DIPS Campuses'}
                   </span>
                 </div>
                 <div>

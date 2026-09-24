@@ -18,6 +18,7 @@ import type { Resource, User as UserType } from '../types.js';
 import { StarRatingDisplay, StarRatingBadge, RateResourceModal } from './StarRating.js';
 import { BookmarkButton } from './BookmarkButton.js';
 import { getBookmarkedResourceIds, toggleResourceBookmark } from '../lib/bookmarks.js';
+import { api } from '../lib/api.js';
 
 interface ResourcePreviewModalProps {
   resource: Resource | null;
@@ -58,12 +59,53 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
     setIsBookmarked(newStatus);
   };
 
+  const [commentInput, setCommentInput] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim() || !currentUser || isSubmittingComment) return;
+    setIsSubmittingComment(true);
+    try {
+      const res = await api.addComment(resource.id, commentInput.trim());
+      setCommentInput('');
+      if (onResourceUpdated) {
+        onResourceUpdated(res.resource);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to post comment');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
   const isExternalLink = resource.contentType.includes('Link') || resource.fileUrl.startsWith('http');
   const isVideo = resource.contentType === 'Video' || resource.fileName.endsWith('.mp4');
   const isImage =
     resource.contentType === 'Images' ||
     /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(resource.fileUrl) ||
     /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(resource.fileName);
+
+  const isPdf =
+    resource.contentType === 'PDF' ||
+    resource.contentType === 'Notes' ||
+    resource.contentType === 'Worksheet' ||
+    resource.contentType === 'Assignment' ||
+    resource.contentType === 'Question Paper' ||
+    resource.contentType === 'Sample Paper' ||
+    resource.contentType === 'Lesson Plan' ||
+    /\.pdf(\?.*)?$/i.test(resource.fileUrl) ||
+    /\.pdf$/i.test(resource.fileName);
+
+  const isOfficeDoc =
+    resource.contentType === 'DOCX' ||
+    resource.contentType === 'PPTX' ||
+    resource.contentType === 'XLSX' ||
+    resource.contentType === 'Presentation' ||
+    (resource.contentType as string) === 'Document' ||
+    (resource.contentType as string) === 'Spreadsheet' ||
+    /\.(doc|docx|ppt|pptx|xls|xlsx)(\?.*)?$/i.test(resource.fileUrl) ||
+    /\.(doc|docx|ppt|pptx|xls|xlsx)$/i.test(resource.fileName);
 
   const userRating = currentUser && resource.ratings?.find((r) => r.userId === currentUser.id);
 
@@ -216,6 +258,54 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
                     >
                       Open Full Size <ExternalLink className="w-3.5 h-3.5" />
                     </a>
+                  </div>
+                </div>
+              ) : isPdf ? (
+                <div className="w-full space-y-3">
+                  <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-lg">
+                    <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                      <span className="font-semibold flex items-center gap-2 truncate text-white">
+                        <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
+                        {resource.fileName} — PDF First Page & Document Preview
+                      </span>
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 shrink-0 hover:underline"
+                      >
+                        Open Fullscreen <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                    <iframe
+                      src={`${resource.fileUrl}#view=FitH`}
+                      title={resource.title}
+                      className="w-full h-[450px] bg-white border-0"
+                    />
+                  </div>
+                </div>
+              ) : isOfficeDoc ? (
+                <div className="w-full space-y-3">
+                  <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-lg">
+                    <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                      <span className="font-semibold flex items-center gap-2 truncate text-white">
+                        <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
+                        {resource.fileName} — Word / PPT / Slide Preview
+                      </span>
+                      <a
+                        href={resource.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 shrink-0 hover:underline"
+                      >
+                        Open Fullscreen <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                    <iframe
+                      src={`https://docs.google.com/gview?url=${encodeURIComponent(resource.fileUrl)}&embedded=true`}
+                      title={resource.title}
+                      className="w-full h-[450px] bg-white border-0"
+                    />
                   </div>
                 </div>
               ) : isExternalLink ? (
@@ -384,6 +474,91 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
               ) : (
                 <div className="text-center py-4 text-slate-400 text-xs">
                   <p>No written feedback yet. Be the first to rate this educational material!</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Real-Time Discussion & Comments Section */}
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-3">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">
+                    Real-Time Discussion & Q&A ({resource.comments?.length || 0})
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Ask questions or discuss this learning material with teachers and classmates
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Comment Input Box */}
+              {currentUser ? (
+                <form onSubmit={handlePostComment} className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={commentInput}
+                      onChange={(e) => setCommentInput(e.target.value)}
+                      placeholder="Ask a question or share your thoughts with the class..."
+                      className="flex-1 px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!commentInput.trim() || isSubmittingComment}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0 flex items-center gap-1.5"
+                    >
+                      {isSubmittingComment ? 'Posting...' : 'Post Comment'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Please log in to participate in the discussion.</p>
+              )}
+
+              {/* Comments List */}
+              {resource.comments && resource.comments.length > 0 ? (
+                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                  {resource.comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800">{c.userName}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              c.userRole === 'student'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                            }`}
+                          >
+                            {c.userRole === 'student' ? 'Student' : 'Faculty'}
+                          </span>
+                          {c.userBranch && (
+                            <span className="text-[10px] text-slate-400">• {c.userBranch}</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(c.createdAt).toLocaleDateString()} {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-slate-700 leading-relaxed pl-1">
+                        {c.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 text-xs bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                  <MessageSquare className="w-8 h-8 mx-auto text-slate-300 mb-1" />
+                  <p className="font-medium text-slate-600">No discussion comments yet</p>
+                  <p className="text-[11px] text-slate-400">Be the first student or teacher to start the conversation!</p>
                 </div>
               )}
             </div>

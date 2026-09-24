@@ -224,8 +224,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   <Sparkles className="w-2.5 h-2.5" /> Central Portal
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium tracking-wide">
-                Centralized Academic Directorate & Resource Management Network
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium tracking-wide">
+                Centralized Academic Directorate & Resource Network
               </p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <div className="hidden lg:flex items-center gap-6 text-xs text-slate-300">
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
               <Building className="w-4 h-4 text-indigo-400" />
-              <span className="font-semibold">{branches.length || 19} Connected Campuses & Institutions</span>
+              <span className="font-semibold">{branches.length || 21} Connected Campuses & Institutions</span>
             </div>
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
               <School className="w-4 h-4 text-amber-400" />
@@ -250,12 +250,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         {/* LEFT COLUMN: INSTITUTIONAL SHOWCASE & VALUE PROPOSITION */}
         <div className="flex-1 space-y-8 text-left max-w-2xl">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/25 text-indigo-300 text-xs font-semibold backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/25 text-indigo-300 text-[11px] sm:text-xs font-semibold backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span>Unified Cross-Branch Academic Excellence</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-snug sm:leading-tight">
               One Unified Hub for{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-amber-300 to-indigo-200">
                 Curriculum, Lesson Plans & Resources
@@ -290,18 +290,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               { id: 'branch-mehta-chowk', name: 'DIPS School, Mehta Chowk (Amritsar)', code: 'MHT-ASR', city: 'Mehta Chowk, Amritsar', type: 'school' },
               { id: 'branch-rayya', name: 'DIPS School, Rayya (Amritsar)', code: 'RAY', city: 'Rayya, Amritsar', type: 'school' },
               { id: 'branch-tanda', name: 'DIPS School, Tanda (Hoshiarpur)', code: 'TAN', city: 'Tanda, Hoshiarpur', type: 'school' },
+              { id: 'branch-dasuya', name: 'DIPS School, Dasuya (Hoshiarpur)', code: 'DAS', city: 'Dasuya, Hoshiarpur', type: 'school' },
+              { id: 'branch-khemkaran', name: 'DIPS School, Khemkaran (Tarn Taran)', code: 'KHM', city: 'Khemkaran, Tarn Taran', type: 'school' },
             ];
 
             const activeBranches = (branches.length > 0 ? branches : fallbackList)
-              .filter(
-                (b) =>
-                  b.id !== 'branch-kartarpur' &&
-                  !b.name.toLowerCase().includes('kartarpur') &&
-                  b.id !== 'branch-edu-tanda' &&
-                  !b.name.toLowerCase().includes('college of education') &&
-                  b.id !== 'branch-dasuya' &&
-                  !b.name.toLowerCase().includes('dasuya')
-              )
               .map((b) => {
                 const isCollege =
                   b.name.toLowerCase().includes('college') ||

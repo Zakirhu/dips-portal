@@ -174,6 +174,18 @@ export interface Resource {
   averageRating?: number;
   ratingsCount?: number;
   ratings?: ResourceRating[];
+  comments?: ResourceComment[];
+}
+
+export interface ResourceComment {
+  id: string;
+  resourceId: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  userBranch?: string;
+  content: string;
+  createdAt: string;
 }
 
 export interface ResourceRating {
