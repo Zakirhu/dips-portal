@@ -8,6 +8,7 @@ import type {
   Subject,
   AcademicSession,
   Resource,
+  ResourceRating,
   Announcement,
   AppNotification,
   ActivityLog,
@@ -40,35 +41,35 @@ export function verifyPassword(password: string, hash: string): boolean {
 
 const defaultBranches: Branch[] = [
   {
-    id: 'branch-begowal',
-    name: 'DIPS Begowal',
-    code: 'BEG',
-    city: 'Begowal, Kapurthala',
-    address: 'Near Main GT Road, Begowal, Punjab',
-    phone: '+91 1822 245100',
-    principalName: 'Mrs. Jaswinder Kaur',
-    establishedYear: 2004,
+    id: 'branch-dipsimt',
+    name: 'DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)',
+    code: 'DIPSIMT',
+    city: 'Jalandhar',
+    address: 'DIPSIMT Campus, Jalandhar, Punjab',
+    phone: '+91 181 2780001',
+    principalName: 'Director DIPSIMT',
+    establishedYear: 2005,
     totalStudents: 0,
     totalTeachers: 0,
   },
   {
-    id: 'branch-jalandhar',
-    name: 'DIPS Urban Estate Jalandhar',
-    code: 'JAL',
-    city: 'Jalandhar',
-    address: 'Phase-I, Urban Estate, Jalandhar, Punjab',
-    phone: '+91 181 2284900',
-    principalName: 'Dr. Gurveen Kaur',
-    establishedYear: 2001,
+    id: 'branch-poly-tanda',
+    name: 'DIPS Polytechic College (Tanda)',
+    code: 'DPC-TAN',
+    city: 'Tanda, Hoshiarpur',
+    address: 'DIPS Polytechnic College Campus, Urmar Tanda, Punjab',
+    phone: '+91 1886 223402',
+    principalName: 'Principal DPC',
+    establishedYear: 2007,
     totalStudents: 0,
     totalTeachers: 0,
   },
   {
     id: 'branch-gilzian',
-    name: 'DIPS Gilzian',
+    name: 'DIPS School, Gilzian (Hoshiarpur)',
     code: 'GIL',
     city: 'Gilzian, Hoshiarpur',
-    address: 'Tanda-Gilzian Highway, Punjab',
+    address: 'Tanda-Gilzian Highway, Gilzian, Hoshiarpur, Punjab',
     phone: '+91 1886 271220',
     principalName: 'Mr. Harvinder Singh',
     establishedYear: 2008,
@@ -76,8 +77,80 @@ const defaultBranches: Branch[] = [
     totalTeachers: 0,
   },
   {
+    id: 'branch-urban-estate',
+    name: 'DIPS School, Urban Estate Phase-1',
+    code: 'UE-1',
+    city: 'Jalandhar',
+    address: 'Phase-1, Urban Estate, Jalandhar, Punjab',
+    phone: '+91 181 2284900',
+    principalName: 'Dr. Gurveen Kaur',
+    establishedYear: 2001,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-suranussi',
+    name: 'DIPS School, Suranussi',
+    code: 'SUR',
+    city: 'Suranussi, Jalandhar',
+    address: 'GT Road, Suranussi, Jalandhar, Punjab',
+    phone: '+91 181 2671200',
+    principalName: 'Mrs. Bela Kapoor',
+    establishedYear: 2002,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-karol-bagh',
+    name: 'DIPS School, Karol Bagh',
+    code: 'KB',
+    city: 'Karol Bagh, Jalandhar',
+    address: 'Karol Bagh, Jalandhar, Punjab',
+    phone: '+91 181 2401500',
+    principalName: 'Mrs. Rajeshwari',
+    establishedYear: 2003,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-blooming-dales',
+    name: 'DIPS Blooming Dales Public School',
+    code: 'BDPS',
+    city: 'Begowal, Kapurthala',
+    address: 'Blooming Dales Campus, Begowal, Punjab',
+    phone: '+91 1822 245200',
+    principalName: 'Mrs. Gurmeet Kaur',
+    establishedYear: 2000,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-bhogpur',
+    name: 'DIPS School, Bhogpur',
+    code: 'BHG',
+    city: 'Bhogpur, Jalandhar',
+    address: 'Main GT Road, Bhogpur, Punjab',
+    phone: '+91 181 272300',
+    principalName: 'Mrs. Raminder Kaur',
+    establishedYear: 2005,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-mehatpur',
+    name: 'DIPS School, Mehatpur',
+    code: 'MHT-JAL',
+    city: 'Mehatpur, Jalandhar',
+    address: 'Nakodar-Mehatpur Road, Mehatpur, Punjab',
+    phone: '+91 1821 240300',
+    principalName: 'Mrs. Ritu Pathak',
+    establishedYear: 2012,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
     id: 'branch-nurmahal',
-    name: 'DIPS Nurmahal',
+    name: 'DIPS School, Nurmahal',
     code: 'NUR',
     city: 'Nurmahal, Jalandhar',
     address: 'Kot Badal Khan Road, Nurmahal, Punjab',
@@ -88,10 +161,106 @@ const defaultBranches: Branch[] = [
     totalTeachers: 0,
   },
   {
+    id: 'branch-uggi',
+    name: 'DIPS School, Uggi',
+    code: 'UGG',
+    city: 'Uggi, Jalandhar',
+    address: 'Nakodar-Kapurthala Road, Uggi, Punjab',
+    phone: '+91 1821 255100',
+    principalName: 'Mrs. Ravinder Kaur',
+    establishedYear: 2013,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-batala',
+    name: 'DIPS School, Batala (Gurdaspur)',
+    code: 'BAT',
+    city: 'Batala, Gurdaspur',
+    address: 'Aliwal Road, Batala, Gurdaspur, Punjab',
+    phone: '+91 1871 245600',
+    principalName: 'Mrs. Maninder Kaur',
+    establishedYear: 2010,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-begowal',
+    name: 'DIPS School, Begowal (Kapurthala)',
+    code: 'BEG',
+    city: 'Begowal, Kapurthala',
+    address: 'Near Main GT Road, Begowal, Punjab',
+    phone: '+91 1822 245100',
+    principalName: 'Mrs. Jaswinder Kaur',
+    establishedYear: 2004,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-dhilwan',
+    name: 'DIPS School, Dhilwan (Kapurthala)',
+    code: 'DHL',
+    city: 'Dhilwan, Kapurthala',
+    address: 'GT Road, Dhilwan, Kapurthala, Punjab',
+    phone: '+91 1822 274100',
+    principalName: 'Mrs. Shanti Sharma',
+    establishedYear: 2010,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-hariana',
+    name: 'DIPS School, Hariana (Hoshiarpur)',
+    code: 'HAR',
+    city: 'Hariana, Hoshiarpur',
+    address: 'Hariana-Hoshiarpur Road, Hariana, Punjab',
+    phone: '+91 1886 250300',
+    principalName: 'Mrs. Monica Sachdeva',
+    establishedYear: 2011,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-kapurthala',
+    name: 'DIPS School, Kapurthala',
+    code: 'KAP',
+    city: 'Kapurthala',
+    address: 'Sultanpur Road, Kapurthala, Punjab',
+    phone: '+91 1822 233400',
+    principalName: 'Mrs. Radha Rani',
+    establishedYear: 2008,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-mehta-chowk',
+    name: 'DIPS School, Mehta Chowk (Amritsar)',
+    code: 'MHT-ASR',
+    city: 'Mehta Chowk, Amritsar',
+    address: 'Mehta Chowk Highway, Amritsar, Punjab',
+    phone: '+91 183 277200',
+    principalName: 'Mrs. Pankaj Sharma',
+    establishedYear: 2006,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-rayya',
+    name: 'DIPS School, Rayya (Amritsar)',
+    code: 'RAY',
+    city: 'Rayya, Amritsar',
+    address: 'GT Road, Rayya, Amritsar, Punjab',
+    phone: '+91 183 248900',
+    principalName: 'Mrs. Jagwinder Kaur',
+    establishedYear: 2008,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
     id: 'branch-tanda',
-    name: 'DIPS Tanda',
+    name: 'DIPS School, Tanda (Hoshiarpur)',
     code: 'TAN',
-    city: 'Urmar Tanda',
+    city: 'Tanda, Hoshiarpur',
     address: 'Near Bus Stand, Urmar Tanda, Punjab',
     phone: '+91 1886 223400',
     principalName: 'Mrs. Seema Sharma',
@@ -192,9 +361,336 @@ const defaultUsers: (User & { passwordHash: string })[] = [
   },
 ];
 
-const defaultResources: Resource[] = [];
+const defaultResources: Resource[] = [
+  {
+    id: 'res-cs-01',
+    title: 'Python Basics & Variables - Chapter Notes with Interactive Exercises',
+    description: 'Comprehensive guide covering variable assignment, data types (integers, strings, floats, booleans), basic syntax, and input/output functions with practice questions for Class VII.',
+    subjectId: 'sub-cs',
+    subjectName: 'Computer Science & IT',
+    classId: 'class-7',
+    className: 'Class VII',
+    branchId: 'branch-begowal',
+    branchName: 'DIPS Begowal',
+    chapter: 'Chapter 2: Getting Started with Python',
+    topic: 'Variables, Data Types, and Input Operations',
+    category: 'Study Material',
+    contentType: 'PDF',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 2,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'Initial Chapter Outline',
+        changelog: 'First draft created for DIPS Begowal session.',
+        fileUrl: '/uploads/sample_python_basics.pdf',
+        fileName: 'python_basics_class7.pdf',
+        fileSize: 245000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Begowal',
+        uploadedAt: '2026-09-20T10:00:00.000Z',
+      },
+      {
+        versionNumber: 2,
+        versionTitle: 'Enhanced Code Examples & CBSE Exercises',
+        changelog: 'Added 10 code walkthrough exercises and practice quiz.',
+        fileUrl: '/uploads/sample_python_basics_v2.pdf',
+        fileName: 'python_basics_class7_v2.pdf',
+        fileSize: 310000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Begowal',
+        uploadedAt: '2026-09-21T14:30:00.000Z',
+      },
+    ],
+    fileName: 'python_basics_class7_v2.pdf',
+    fileUrl: '/uploads/sample_python_basics_v2.pdf',
+    fileSize: 310000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Begowal',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Begowal',
+    createdAt: '2026-09-20T10:00:00.000Z',
+    updatedAt: '2026-09-21T14:30:00.000Z',
+    downloadsCount: 42,
+    viewsCount: 156,
+  },
+  {
+    id: 'res-cs-02',
+    title: 'Conditional Statements & Loops Practice Worksheet',
+    description: 'Worksheet containing 15 real-world logic problems, flowchart conversions, and if-elif-else syntax checks for students.',
+    subjectId: 'sub-cs',
+    subjectName: 'Computer Science & IT',
+    classId: 'class-7',
+    className: 'Class VII',
+    branchId: 'branch-jalandhar',
+    branchName: 'DIPS Urban Estate Jalandhar',
+    chapter: 'Chapter 3: Control Structures',
+    topic: 'If-Else Conditionals and While Loops',
+    category: 'Assessment',
+    contentType: 'Worksheet',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'Initial Release',
+        changelog: 'Formative assessment worksheet for Term 1.',
+        fileUrl: '/uploads/conditionals_worksheet.pdf',
+        fileName: 'conditionals_worksheet_class7.pdf',
+        fileSize: 180000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Urban Estate Jalandhar',
+        uploadedAt: '2026-09-22T08:15:00.000Z',
+      },
+    ],
+    fileName: 'conditionals_worksheet_class7.pdf',
+    fileUrl: '/uploads/conditionals_worksheet.pdf',
+    fileSize: 180000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Urban Estate Jalandhar',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Urban Estate Jalandhar',
+    createdAt: '2026-09-22T08:15:00.000Z',
+    updatedAt: '2026-09-22T08:15:00.000Z',
+    downloadsCount: 28,
+    viewsCount: 89,
+  },
+  {
+    id: 'res-math-01',
+    title: 'Integers & Fractions Step-by-Step Mastery Guide',
+    description: 'NCERT textbook companion covering addition, subtraction, multiplication, and division of negative numbers with number lines.',
+    subjectId: 'sub-math',
+    subjectName: 'Mathematics',
+    classId: 'class-7',
+    className: 'Class VII',
+    branchId: 'branch-begowal',
+    branchName: 'DIPS Begowal',
+    chapter: 'Chapter 1: Integers',
+    topic: 'Properties of Addition and Multiplication of Integers',
+    category: 'Study Material',
+    contentType: 'Notes',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'Complete Chapter Notes',
+        fileUrl: '/uploads/math_integers_class7.pdf',
+        fileName: 'math_integers_class7.pdf',
+        fileSize: 420000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Begowal',
+        uploadedAt: '2026-09-18T11:00:00.000Z',
+      },
+    ],
+    fileName: 'math_integers_class7.pdf',
+    fileUrl: '/uploads/math_integers_class7.pdf',
+    fileSize: 420000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Begowal',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Begowal',
+    createdAt: '2026-09-18T11:00:00.000Z',
+    updatedAt: '2026-09-18T11:00:00.000Z',
+    downloadsCount: 65,
+    viewsCount: 210,
+  },
+  {
+    id: 'res-sci-01',
+    title: 'Nutrition in Plants - Laboratory Experiment & Microscopic Diagram Manual',
+    description: 'Photosynthesis test procedure with iodine reagent, stomata observation under compound microscope, and autotrophic vs heterotrophic comparison diagrams.',
+    subjectId: 'sub-sci',
+    subjectName: 'Science',
+    classId: 'class-7',
+    className: 'Class VII',
+    branchId: 'branch-gilzian',
+    branchName: 'DIPS Gilzian',
+    chapter: 'Chapter 1: Nutrition in Plants',
+    topic: 'Modes of Nutrition & Stomata Investigation',
+    category: 'Practical',
+    contentType: 'Practical File',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'Lab Manual Handout',
+        fileUrl: '/uploads/science_nutrition_plants_lab.pdf',
+        fileName: 'science_nutrition_plants_lab.pdf',
+        fileSize: 512000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Gilzian',
+        uploadedAt: '2026-09-19T09:30:00.000Z',
+      },
+    ],
+    fileName: 'science_nutrition_plants_lab.pdf',
+    fileUrl: '/uploads/science_nutrition_plants_lab.pdf',
+    fileSize: 512000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Gilzian',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Gilzian',
+    createdAt: '2026-09-19T09:30:00.000Z',
+    updatedAt: '2026-09-19T09:30:00.000Z',
+    downloadsCount: 51,
+    viewsCount: 178,
+  },
+  {
+    id: 'res-eng-01',
+    title: 'Three Questions by Leo Tolstoy - Analysis & Grammar Worksheet',
+    description: 'Detailed literary synopsis, character study, vocabulary glossary, and passive voice transformation exercises for Class VII English.',
+    subjectId: 'sub-eng',
+    subjectName: 'English',
+    classId: 'class-7',
+    className: 'Class VII',
+    branchId: 'branch-tanda',
+    branchName: 'DIPS Tanda',
+    chapter: 'Honeycomb - Chapter 1',
+    topic: 'Three Questions & Verb Tenses',
+    category: 'Study Material',
+    contentType: 'PDF',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'First Edition',
+        fileUrl: '/uploads/english_three_questions.pdf',
+        fileName: 'english_three_questions.pdf',
+        fileSize: 195000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Tanda',
+        uploadedAt: '2026-09-17T15:20:00.000Z',
+      },
+    ],
+    fileName: 'english_three_questions.pdf',
+    fileUrl: '/uploads/english_three_questions.pdf',
+    fileSize: 195000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Tanda',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Tanda',
+    createdAt: '2026-09-17T15:20:00.000Z',
+    updatedAt: '2026-09-17T15:20:00.000Z',
+    downloadsCount: 39,
+    viewsCount: 134,
+  },
+  {
+    id: 'res-cs-03',
+    title: 'Class 8 HTML5 & CSS3 Web Designing Starter Project',
+    description: 'Hands-on project files, semantic tags reference, and stylesheets for building school club websites.',
+    subjectId: 'sub-cs',
+    subjectName: 'Computer Science & IT',
+    classId: 'class-8',
+    className: 'Class VIII',
+    branchId: 'branch-begowal',
+    branchName: 'DIPS Begowal',
+    chapter: 'Chapter 4: Web Authoring with HTML5',
+    topic: 'Semantic Structure & Inline Styling',
+    category: 'Practical',
+    contentType: 'Project',
+    academicSession: '2026-27',
+    status: 'published',
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        versionTitle: 'Web Project Kit',
+        fileUrl: '/uploads/html5_project_class8.pdf',
+        fileName: 'html5_project_class8.pdf',
+        fileSize: 340000,
+        fileType: 'application/pdf',
+        uploadedByUserId: 'user-admin',
+        uploadedByUserName: 'DIPS Begowal Administration',
+        uploadedByUserBranch: 'DIPS Begowal',
+        uploadedAt: '2026-09-21T11:00:00.000Z',
+      },
+    ],
+    fileName: 'html5_project_class8.pdf',
+    fileUrl: '/uploads/html5_project_class8.pdf',
+    fileSize: 340000,
+    uploadedByUserId: 'user-admin',
+    uploadedByName: 'DIPS Begowal Administration',
+    uploadedByBranch: 'DIPS Begowal',
+    lastUpdatedByUserId: 'user-admin',
+    lastUpdatedByName: 'DIPS Begowal Administration',
+    lastUpdatedByBranch: 'DIPS Begowal',
+    createdAt: '2026-09-21T11:00:00.000Z',
+    updatedAt: '2026-09-21T11:00:00.000Z',
+    downloadsCount: 31,
+    viewsCount: 112,
+  },
+];
 
-const defaultAnnouncements: Announcement[] = [];
+const defaultAnnouncements: Announcement[] = [
+  {
+    id: 'anc-01',
+    title: 'DIPS Mid-Term Academic Assessments (2026-27) Schedule & Question Blueprint Released',
+    content: 'All faculty members and students across all 20 DIPS institutions and campuses are requested to download the finalized Mid-Term examination schedule and chapter-wise weightage blueprint. Teachers must ensure all revision materials and practice worksheets are uploaded by Friday.',
+    priority: 'urgent',
+    targetRole: 'all',
+    authorName: 'Academic Directorate',
+    authorRole: 'Central Administration',
+    createdAt: '2026-09-23T08:00:00.000Z',
+  },
+  {
+    id: 'anc-02',
+    title: 'Staff Notice: Cross-Branch Lesson Planning & Resource Collaboration Window Open',
+    content: 'Faculty teaching Classes VI to XII can now collaborate on study materials, question banks, and multimedia presentations across branches. Check the "Collaborate" badge on existing resources to submit updated revisions.',
+    priority: 'high',
+    targetRole: 'teacher',
+    authorName: 'Curriculum Planning Committee',
+    authorRole: 'Central Coordinator',
+    createdAt: '2026-09-22T10:30:00.000Z',
+  },
+  {
+    id: 'anc-03',
+    title: 'Inter-Branch DIPS Annual Science & Robotics Fair 2026 - Registration Open',
+    content: 'Student project submissions for the Inter-Branch STEM innovation challenge are now being accepted. Science & Computer teachers are requested to guide students using the downloadable project kits in the repository.',
+    priority: 'normal',
+    targetRole: 'all',
+    authorName: 'DIPS Science Society',
+    authorRole: 'Academic Department',
+    createdAt: '2026-09-21T09:15:00.000Z',
+  },
+  {
+    id: 'anc-04',
+    title: 'Central Digital Repository Upgrade: NCERT Exemplars & Audio-Visual Modules Active',
+    content: 'The DIPS portal cloud storage has been expanded across all 20 campuses. High-resolution PDFs, laboratory manual guides, and solved sample papers are now accessible directly from any campus or mobile device.',
+    priority: 'low',
+    targetRole: 'all',
+    authorName: 'IT Directorate',
+    authorRole: 'System Admin',
+    createdAt: '2026-09-20T14:00:00.000Z',
+  },
+];
 
 const defaultActivityLogs: ActivityLog[] = [];
 
@@ -229,7 +725,48 @@ class Database {
     if (fs.existsSync(DB_FILE)) {
       try {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+
+        // Remove Kartarpur, College of Education, Dasuya if present in saved database
+        if (parsed.branches) {
+          parsed.branches = parsed.branches.filter(
+            (b: Branch) =>
+              b.id !== 'branch-kartarpur' &&
+              !b.name.toLowerCase().includes('kartarpur') &&
+              b.id !== 'branch-edu-tanda' &&
+              !b.name.toLowerCase().includes('college of education') &&
+              b.id !== 'branch-dasuya' &&
+              !b.name.toLowerCase().includes('dasuya')
+          );
+        }
+
+        // Ensure all default branches are synced in
+        if (!parsed.branches || parsed.branches.length < defaultBranches.length) {
+          const existingIds = new Set((parsed.branches || []).map((b: Branch) => b.id));
+          const existingNames = new Set((parsed.branches || []).map((b: Branch) => b.name.toLowerCase()));
+          parsed.branches = parsed.branches || [];
+
+          for (const defBranch of defaultBranches) {
+            if (!existingIds.has(defBranch.id) && !existingNames.has(defBranch.name.toLowerCase())) {
+              parsed.branches.push(defBranch);
+            } else {
+              // Update branch details
+              const idx = parsed.branches.findIndex((b: Branch) => b.id === defBranch.id || b.name.toLowerCase() === defBranch.name.toLowerCase());
+              if (idx !== -1) {
+                parsed.branches[idx] = { ...parsed.branches[idx], ...defBranch };
+              }
+            }
+          }
+        }
+
+        if (!parsed.resources || parsed.resources.length === 0) {
+          parsed.resources = defaultResources;
+        }
+        if (!parsed.announcements || parsed.announcements.length === 0) {
+          parsed.announcements = defaultAnnouncements;
+        }
+        this.saveData(parsed);
+        return parsed;
       } catch (err) {
         console.error('Failed to read database file, initializing with defaults:', err);
       }
@@ -283,8 +820,51 @@ class Database {
   }
 
   public addUser(user: User & { passwordHash: string }) {
-    this.data.users.push(user);
+    // Avoid duplicates by ID or username
+    const existingIdx = this.data.users.findIndex((u) => u.id === user.id || u.username === user.username);
+    if (existingIdx !== -1) {
+      this.data.users[existingIdx] = user;
+    } else {
+      this.data.users.push(user);
+    }
     this.persist();
+  }
+
+  public mergeRemoteUsers(remoteUsers: any[]) {
+    let changed = false;
+    for (const r of remoteUsers) {
+      const idx = this.data.users.findIndex((u) => u.id === r.id || u.username === r.username || (r.email && u.email.toLowerCase() === r.email.toLowerCase()));
+      const mappedUser: User & { passwordHash: string } = {
+        id: r.id,
+        username: r.username,
+        email: r.email,
+        fullName: r.full_name || r.fullName,
+        role: r.role,
+        branchId: r.branch_id || r.branchId,
+        branchName: r.branch_name || r.branchName,
+        phone: r.phone,
+        employeeId: r.employee_id || r.employeeId,
+        admissionNo: r.admission_no || r.admissionNo,
+        designation: r.designation,
+        classId: r.class_id || r.classId,
+        className: r.class_name || r.className,
+        section: r.section,
+        assignedSubjectIds: r.assigned_subject_ids || r.assignedSubjectIds || [],
+        assignedClassIds: r.assigned_class_ids || r.assignedClassIds || [],
+        isActive: r.is_active !== undefined ? r.is_active : true,
+        createdAt: r.created_at || new Date().toISOString(),
+        passwordHash: r.password_hash || r.passwordHash || '',
+      };
+      if (idx !== -1) {
+        this.data.users[idx] = { ...this.data.users[idx], ...mappedUser };
+      } else {
+        this.data.users.push(mappedUser);
+      }
+      changed = true;
+    }
+    if (changed) {
+      this.persist();
+    }
   }
 
   public updateUser(id: string, updates: Partial<User & { passwordHash?: string }>) {
@@ -391,8 +971,74 @@ class Database {
   }
 
   public addResource(resource: Resource) {
-    this.data.resources.unshift(resource);
+    const existingIdx = this.data.resources.findIndex((r) => r.id === resource.id);
+    if (existingIdx !== -1) {
+      this.data.resources[existingIdx] = resource;
+    } else {
+      this.data.resources.unshift(resource);
+    }
     this.persist();
+  }
+
+  public mergeRemoteResources(remoteResources: any[]) {
+    let changed = false;
+    for (const r of remoteResources) {
+      const idx = this.data.resources.findIndex((res) => res.id === r.id);
+      const mapped: Resource = {
+        id: r.id,
+        title: r.title,
+        description: r.description || '',
+        subjectId: r.subject_id || r.subjectId,
+        subjectName: r.subject_name || r.subjectName || 'General',
+        classId: r.class_id || r.classId,
+        className: r.class_name || r.className || 'All Classes',
+        branchId: r.branch_id || r.branchId,
+        branchName: r.branch_name || r.branchName || 'DIPS Branch',
+        chapter: r.chapter || 'Chapter',
+        topic: r.topic || 'General Topic',
+        category: (r.category || 'syllabus') as any,
+        contentType: (r.resource_type || r.contentType || 'document') as any,
+        academicSession: r.academic_session || '2025-2026',
+        fileUrl: r.file_url || r.fileUrl || '',
+        fileName: r.file_name || r.fileName || 'document.pdf',
+        fileSize: r.file_size_bytes || r.fileSize || 0,
+        currentVersion: r.current_version || 1,
+        versions: r.versions || [
+          {
+            versionNumber: 1,
+            versionTitle: 'Initial Release',
+            fileUrl: r.file_url || r.fileUrl || '',
+            fileName: r.file_name || r.fileName || 'document.pdf',
+            fileSize: r.file_size_bytes || r.fileSize || 0,
+            fileType: 'application/pdf',
+            uploadedByUserId: r.uploaded_by_id || 'system',
+            uploadedByUserName: r.uploaded_by_name || 'Faculty',
+            uploadedByUserBranch: r.branch_name || 'DIPS Branch',
+            uploadedAt: r.created_at || new Date().toISOString(),
+          }
+        ],
+        uploadedByUserId: r.uploaded_by_id || r.uploadedByUserId || 'system',
+        uploadedByName: r.uploaded_by_name || r.uploadedByName || 'Faculty',
+        uploadedByBranch: r.branch_name || r.branchName || 'DIPS Branch',
+        lastUpdatedByUserId: r.uploaded_by_id || r.uploadedByUserId || 'system',
+        lastUpdatedByName: r.uploaded_by_name || r.uploadedByName || 'Faculty',
+        lastUpdatedByBranch: r.branch_name || r.branchName || 'DIPS Branch',
+        status: (r.status || 'published') as any,
+        downloadsCount: r.download_count || r.downloadsCount || 0,
+        viewsCount: r.views_count || r.viewsCount || 0,
+        createdAt: r.created_at || new Date().toISOString(),
+        updatedAt: r.updated_at || r.created_at || new Date().toISOString(),
+      };
+      if (idx !== -1) {
+        this.data.resources[idx] = { ...this.data.resources[idx], ...mapped };
+      } else {
+        this.data.resources.push(mapped);
+      }
+      changed = true;
+    }
+    if (changed) {
+      this.persist();
+    }
   }
 
   public updateResource(id: string, updates: Partial<Resource>) {
@@ -408,6 +1054,65 @@ class Database {
   public deleteResource(id: string) {
     this.data.resources = this.data.resources.filter((r) => r.id !== id);
     this.persist();
+  }
+
+  public rateResource(
+    resourceId: string,
+    ratingData: {
+      userId: string;
+      userName: string;
+      userRole: any;
+      userBranch?: string;
+      rating: number;
+      feedback?: string;
+    }
+  ): { resource: Resource; rating: ResourceRating } | null {
+    const resource = this.data.resources.find((r) => r.id === resourceId);
+    if (!resource) return null;
+
+    if (!resource.ratings) {
+      resource.ratings = [];
+    }
+
+    const existingIndex = resource.ratings.findIndex((r) => r.userId === ratingData.userId);
+    const now = new Date().toISOString();
+
+    let ratingObj: ResourceRating;
+    if (existingIndex !== -1) {
+      // Update existing rating
+      ratingObj = {
+        ...resource.ratings[existingIndex],
+        rating: ratingData.rating,
+        feedback: ratingData.feedback !== undefined ? ratingData.feedback : resource.ratings[existingIndex].feedback,
+        userName: ratingData.userName,
+        userRole: ratingData.userRole,
+        userBranch: ratingData.userBranch,
+        updatedAt: now,
+      };
+      resource.ratings[existingIndex] = ratingObj;
+    } else {
+      // Create new rating
+      ratingObj = {
+        id: 'rating-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+        resourceId,
+        userId: ratingData.userId,
+        userName: ratingData.userName,
+        userRole: ratingData.userRole,
+        userBranch: ratingData.userBranch,
+        rating: ratingData.rating,
+        feedback: ratingData.feedback || '',
+        createdAt: now,
+      };
+      resource.ratings.push(ratingObj);
+    }
+
+    // Recalculate average and total count
+    const totalScore = resource.ratings.reduce((sum, r) => sum + r.rating, 0);
+    resource.ratingsCount = resource.ratings.length;
+    resource.averageRating = Number((totalScore / resource.ratings.length).toFixed(1));
+
+    this.persist();
+    return { resource, rating: ratingObj };
   }
 
   // --- Announcements ---

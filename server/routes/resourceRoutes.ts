@@ -10,6 +10,7 @@ import {
   canEditResource,
   AuthenticatedRequest,
 } from '../auth.js';
+import { uploadFileToSupabaseStorage, syncResourceToSupabase } from '../supabase.js';
 import type { Resource, ResourceVersion, ContentCategory, ContentType, ResourceStatus } from '../../src/types.js';
 
 export const resourceRouter = Router();
@@ -144,7 +145,7 @@ resourceRouter.post(
   authMiddleware,
   requireTeacherOrAdmin,
   upload.single('file'),
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     const user = req.user!;
     const {
       title,
@@ -182,10 +183,23 @@ resourceRouter.post(
     let fileType = '';
 
     if (req.file) {
-      fileUrl = `/uploads/${req.file.filename}`;
       fileName = req.file.originalname;
       fileSize = req.file.size;
       fileType = req.file.mimetype;
+
+      // Upload file directly to Supabase Storage for 100% permanent retention
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const uploadRes = await uploadFileToSupabaseStorage(fileBuffer, req.file.originalname, req.file.mimetype);
+        if (uploadRes.success && uploadRes.publicUrl) {
+          fileUrl = uploadRes.publicUrl;
+        } else {
+          fileUrl = `/uploads/${req.file.filename}`;
+        }
+      } catch (uploadErr) {
+        console.warn('[Storage] Upload fallback to local:', uploadErr);
+        fileUrl = `/uploads/${req.file.filename}`;
+      }
     } else if (externalLink) {
       fileUrl = externalLink;
       fileName = title + (contentType ? ` (${contentType})` : '');
@@ -257,6 +271,13 @@ resourceRouter.post(
 
     db.addResource(newResource);
 
+    // Sync resource metadata permanently to Supabase database
+    try {
+      await syncResourceToSupabase(newResource);
+    } catch (syncErr) {
+      console.warn('[Supabase] Resource sync warning:', syncErr);
+    }
+
     // Activity Log
     db.logActivity({
       userId: user.id,
@@ -319,7 +340,7 @@ resourceRouter.post(
   authMiddleware,
   requireTeacherOrAdmin,
   upload.single('file'),
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     const user = req.user!;
     const resource = db.findResourceById(req.params.id);
     if (!resource) return res.status(404).json({ error: 'Resource not found' });
@@ -340,10 +361,23 @@ resourceRouter.post(
     let fileType = 'application/pdf';
 
     if (req.file) {
-      fileUrl = `/uploads/${req.file.filename}`;
       fileName = req.file.originalname;
       fileSize = req.file.size;
       fileType = req.file.mimetype;
+
+      // Upload version file directly to permanent Supabase Storage
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const uploadRes = await uploadFileToSupabaseStorage(fileBuffer, req.file.originalname, req.file.mimetype);
+        if (uploadRes.success && uploadRes.publicUrl) {
+          fileUrl = uploadRes.publicUrl;
+        } else {
+          fileUrl = `/uploads/${req.file.filename}`;
+        }
+      } catch (uploadErr) {
+        console.warn('[Storage] Version upload fallback to local:', uploadErr);
+        fileUrl = `/uploads/${req.file.filename}`;
+      }
     } else if (externalLink) {
       fileUrl = externalLink;
       fileName = `${resource.title} (Updated Link)`;
@@ -381,6 +415,13 @@ resourceRouter.post(
     resource.updatedAt = now;
 
     db.persist();
+
+    // Sync updated resource to Supabase database
+    try {
+      await syncResourceToSupabase(resource);
+    } catch (syncErr) {
+      console.warn('[Supabase] Resource version sync warning:', syncErr);
+    }
 
     // Log Activity
     db.logActivity({
@@ -542,4 +583,83 @@ resourceRouter.delete('/:id', authMiddleware, requireTeacherOrAdmin, (req: Authe
   });
 
   return res.json({ success: true });
+});
+
+// POST /api/resources/:id/rate - Star-based rating & qualitative review
+resourceRouter.post('/:id/rate', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  const resource = db.findResourceById(req.params.id);
+  if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+  // Student class boundary check: students can only rate resources in their class
+  if (user.role === 'student' && user.classId && resource.classId !== user.classId) {
+    return res.status(403).json({ error: 'You can only rate curriculum content for your enrolled class.' });
+  }
+
+  const { rating, feedback } = req.body;
+  const numRating = Number(rating);
+
+  if (isNaN(numRating) || numRating < 1 || numRating > 5) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5 stars.' });
+  }
+
+  const cleanRating = Math.round(numRating);
+  const result = db.rateResource(resource.id, {
+    userId: user.id,
+    userName: user.fullName,
+    userRole: user.role,
+    userBranch: user.branchName || '',
+    rating: cleanRating,
+    feedback: typeof feedback === 'string' ? feedback.trim() : '',
+  });
+
+  if (!result) {
+    return res.status(500).json({ error: 'Failed to record rating.' });
+  }
+
+  // Activity log for auditing
+  db.logActivity({
+    userId: user.id,
+    userName: user.fullName,
+    userRole: user.role,
+    branchName: user.branchName || 'DIPS Branch',
+    action: 'RATE',
+    resourceTitle: resource.title,
+    subjectName: resource.subjectName,
+    details: `Rated ${cleanRating} stars for "${resource.title}". Feedback: ${feedback ? `"${feedback}"` : 'No written comment'}.`,
+  });
+
+  // Notify author if rating has high praise or constructive feedback
+  if (resource.uploadedByUserId !== user.id) {
+    db.addNotification({
+      id: 'notif-rate-' + Date.now(),
+      userId: resource.uploadedByUserId,
+      title: `New Rating for "${resource.title}"`,
+      message: `${user.fullName} (${user.role === 'student' ? 'Student' : 'Faculty'}) rated your content ${cleanRating}★${feedback ? `: "${feedback}"` : '.'}`,
+      type: 'rating',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  res.json({
+    success: true,
+    resource: result.resource,
+    rating: result.rating,
+    averageRating: result.resource.averageRating,
+    ratingsCount: result.resource.ratingsCount,
+  });
+});
+
+// GET /api/resources/:id/ratings - Retrieve ratings and feedback comments
+resourceRouter.get('/:id/ratings', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const resource = db.findResourceById(req.params.id);
+  if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+  const ratings = resource.ratings || [];
+  res.json({
+    ratings,
+    averageRating: resource.averageRating || 0,
+    ratingsCount: resource.ratingsCount || 0,
+  });
 });

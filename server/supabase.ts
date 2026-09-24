@@ -66,7 +66,30 @@ CREATE TABLE IF NOT EXISTS public.subjects (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Resources / Learning Materials Table
+-- 4. Users Table (Admin, Teachers, Students)
+CREATE TABLE IF NOT EXISTS public.users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  full_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'teacher', 'student', 'coordinator')),
+  branch_id TEXT REFERENCES public.branches(id) ON DELETE SET NULL,
+  branch_name TEXT,
+  phone TEXT,
+  employee_id TEXT,
+  admission_no TEXT,
+  designation TEXT,
+  class_id TEXT,
+  class_name TEXT,
+  section TEXT,
+  assigned_subject_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+  assigned_class_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+  is_active BOOLEAN DEFAULT TRUE,
+  password_hash TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Resources / Learning Materials Table
 CREATE TABLE IF NOT EXISTS public.resources (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -119,6 +142,7 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
 ALTER TABLE public.branches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
@@ -126,16 +150,71 @@ ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow anon read branches" ON public.branches FOR SELECT USING (true);
 CREATE POLICY "Allow anon read classes" ON public.classes FOR SELECT USING (true);
 CREATE POLICY "Allow anon read subjects" ON public.subjects FOR SELECT USING (true);
+CREATE POLICY "Allow anon read users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Allow anon read resources" ON public.resources FOR SELECT USING (true);
 CREATE POLICY "Allow anon read announcements" ON public.announcements FOR SELECT USING (true);
 CREATE POLICY "Allow anon read activity_logs" ON public.activity_logs FOR SELECT USING (true);
 
 -- Allow authenticated/anon insert/update for demo portal
+CREATE POLICY "Allow anon insert users" ON public.users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update users" ON public.users FOR UPDATE USING (true);
 CREATE POLICY "Allow anon insert resources" ON public.resources FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon update resources" ON public.resources FOR UPDATE USING (true);
 CREATE POLICY "Allow anon insert announcements" ON public.announcements FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon insert activity_logs" ON public.activity_logs FOR INSERT WITH CHECK (true);
+
+-- 7. Supabase Storage: Public bucket for resources
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('dips-resources', 'dips-resources', true, 52428800, null)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Storage public read policy
+CREATE POLICY "Public Access DIPS Resources" ON storage.objects FOR SELECT USING (bucket_id = 'dips-resources');
+-- Storage upload policy
+CREATE POLICY "Allow Upload DIPS Resources" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'dips-resources');
+CREATE POLICY "Allow Update DIPS Resources" ON storage.objects FOR UPDATE USING (bucket_id = 'dips-resources');
 `;
+
+export const BUCKET_NAME = 'dips-resources';
+
+/**
+ * Uploads a file buffer permanently into Supabase Storage
+ */
+export async function uploadFileToSupabaseStorage(
+  fileBuffer: Buffer,
+  fileName: string,
+  mimeType: string
+): Promise<{ success: boolean; publicUrl?: string; error?: string }> {
+  try {
+    const client = getSupabaseClient();
+    const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const storagePath = `uploads/${Date.now()}-${Math.round(Math.random() * 1e4)}-${cleanFileName}`;
+
+    // Upload directly to Supabase storage bucket
+    const { data, error } = await client.storage
+      .from(BUCKET_NAME)
+      .upload(storagePath, fileBuffer, {
+        contentType: mimeType || 'application/octet-stream',
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn(`[Supabase Storage] Notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = client.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+
+    return {
+      success: true,
+      publicUrl: publicUrlData.publicUrl,
+    };
+  } catch (err: any) {
+    console.error('[Supabase Storage] Error:', err);
+    return { success: false, error: err?.message };
+  }
+}
 
 /**
  * Checks connectivity to the Supabase endpoint
@@ -275,8 +354,68 @@ export async function syncAnnouncementToSupabase(anc: any) {
 }
 
 /**
- * Syncs an activity log record to Supabase
+ * Loads resources from Supabase into memory if present
  */
+export async function loadResourcesFromSupabase(): Promise<any[]> {
+  try {
+    const client = getSupabaseClient();
+    const { data, error } = await client.from('resources').select('*');
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+/**
+ * Syncs a user record (Teacher, Admin, Student) permanently to Supabase
+ */
+export async function syncUserToSupabase(user: any, passwordHash?: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('users').upsert({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      full_name: user.fullName,
+      role: user.role,
+      branch_id: user.branchId || null,
+      branch_name: user.branchName || null,
+      phone: user.phone || null,
+      employee_id: user.employeeId || null,
+      admission_no: user.admissionNo || null,
+      designation: user.designation || null,
+      class_id: user.classId || null,
+      class_name: user.className || null,
+      section: user.section || null,
+      assigned_subject_ids: user.assignedSubjectIds || [],
+      assigned_class_ids: user.assignedClassIds || [],
+      is_active: user.isActive !== false,
+      password_hash: passwordHash || user.passwordHash || null,
+    });
+    if (error) {
+      console.warn(`[Supabase Sync] User sync notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Loads registered users from Supabase PostgreSQL
+ */
+export async function loadUsersFromSupabase(): Promise<any[]> {
+  try {
+    const client = getSupabaseClient();
+    const { data, error } = await client.from('users').select('*');
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
 export async function syncActivityLogToSupabase(log: any) {
   try {
     const client = getSupabaseClient();

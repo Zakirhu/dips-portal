@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { db, verifyPassword } from '../db.js';
 import { generateToken, authMiddleware, AuthenticatedRequest } from '../auth.js';
+import { syncUserToSupabase, syncActivityLogToSupabase } from '../supabase.js';
 
 export const authRouter = Router();
 
@@ -23,7 +24,7 @@ authRouter.get('/demo-accounts', (req, res) => {
 });
 
 // Teacher Self-Registration
-authRouter.post('/register-teacher', (req, res) => {
+authRouter.post('/register-teacher', async (req, res) => {
   const {
     fullName,
     email,
@@ -88,6 +89,13 @@ authRouter.post('/register-teacher', (req, res) => {
 
   db.addUser(newTeacher);
 
+  // Permanently save teacher account to Supabase
+  try {
+    await syncUserToSupabase(newTeacher, passwordHash);
+  } catch (syncErr) {
+    console.warn('[Supabase] Teacher account sync warning:', syncErr);
+  }
+
   if (typeof branch.totalTeachers === 'number') {
     db.updateBranch(branch.id, { totalTeachers: branch.totalTeachers + 1 });
   }
@@ -112,7 +120,7 @@ authRouter.post('/register-teacher', (req, res) => {
   });
 });
 
-authRouter.post('/login', (req, res) => {
+authRouter.post('/login', async (req, res) => {
   const { username, password, expectedRole } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username/ID and password are required.' });
@@ -142,15 +150,23 @@ authRouter.post('/login', (req, res) => {
   const { passwordHash, ...safeUser } = user;
   const token = generateToken(safeUser);
 
-  db.logActivity({
+  const logEntry = {
     userId: user.id,
     userName: user.fullName,
     userRole: user.role,
     branchName: user.branchName || 'DIPS Central',
-    action: 'LOGIN',
-    details: `User logged into DIPS portal from ${user.branchName || 'central system'}.`,
+    action: 'LOGIN' as const,
+    details: `User (${user.fullName}, ${user.role}) logged in from ${user.branchName || 'central system'}.`,
     ipAddress: req.ip,
-  });
+  };
+
+  db.logActivity(logEntry);
+
+  try {
+    await syncActivityLogToSupabase(logEntry);
+  } catch (logErr) {
+    // Non-blocking log sync
+  }
 
   return res.json({
     token,

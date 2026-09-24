@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { db } from '../db.js';
 import { authMiddleware, requireAdmin, AuthenticatedRequest } from '../auth.js';
+import { syncUserToSupabase } from '../supabase.js';
 import type { User } from '../../src/types.js';
 
 export const userRouter = Router();
@@ -16,7 +17,7 @@ userRouter.get('/teachers', authMiddleware, (req: AuthenticatedRequest, res) => 
 });
 
 // Add Teacher
-userRouter.post('/teachers', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.post('/teachers', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const {
     fullName,
     employeeId,
@@ -62,6 +63,14 @@ userRouter.post('/teachers', authMiddleware, requireAdmin, (req: AuthenticatedRe
   };
 
   db.addUser(newTeacher);
+
+  // Permanently save teacher account to Supabase
+  try {
+    await syncUserToSupabase(newTeacher, passwordHash);
+  } catch (syncErr) {
+    console.warn('[Supabase] Teacher sync warning:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
@@ -76,7 +85,7 @@ userRouter.post('/teachers', authMiddleware, requireAdmin, (req: AuthenticatedRe
 });
 
 // Edit Teacher
-userRouter.put('/teachers/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.put('/teachers/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const teacher = db.findUserById(id);
   if (!teacher || (teacher.role !== 'teacher' && teacher.role !== 'coordinator')) {
@@ -126,6 +135,14 @@ userRouter.put('/teachers/:id', authMiddleware, requireAdmin, (req: Authenticate
   });
 
   const { passwordHash: _, ...safe } = updated!;
+
+  // Sync update to Supabase
+  try {
+    await syncUserToSupabase(updated!, updated!.passwordHash);
+  } catch (syncErr) {
+    console.warn('[Supabase] Teacher update sync notice:', syncErr);
+  }
+
   return res.json({ teacher: safe });
 });
 
@@ -282,7 +299,7 @@ userRouter.delete('/students/:id', authMiddleware, requireAdmin, (req: Authentic
 });
 
 // Reset Password
-userRouter.post('/:id/reset-password', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.post('/:id/reset-password', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const { newPassword } = req.body;
   const user = db.findUserById(id);
@@ -290,7 +307,16 @@ userRouter.post('/:id/reset-password', authMiddleware, requireAdmin, (req: Authe
 
   const targetPassword = newPassword || (user.role === 'student' ? 'student123' : 'teacher123');
   const newHash = crypto.createHash('sha256').update(targetPassword).digest('hex');
-  db.updateUser(id, { passwordHash: newHash });
+  const updated = db.updateUser(id, { passwordHash: newHash });
+
+  // Sync to Supabase
+  try {
+    if (updated) {
+      await syncUserToSupabase(updated, newHash);
+    }
+  } catch (syncErr) {
+    console.warn('[Supabase] Password reset sync notice:', syncErr);
+  }
 
   db.logActivity({
     userId: req.user!.id,
@@ -305,12 +331,22 @@ userRouter.post('/:id/reset-password', authMiddleware, requireAdmin, (req: Authe
 });
 
 // Toggle Active/Inactive
-userRouter.post('/:id/toggle-status', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.post('/:id/toggle-status', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const user = db.findUserById(id);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const updated = db.updateUser(id, { isActive: !user.isActive });
+
+  // Sync to Supabase
+  try {
+    if (updated) {
+      await syncUserToSupabase(updated, updated.passwordHash);
+    }
+  } catch (syncErr) {
+    console.warn('[Supabase] Toggle status sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,

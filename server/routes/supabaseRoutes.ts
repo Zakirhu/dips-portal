@@ -144,7 +144,40 @@ supabaseRouter.post('/sync', async (req, res) => {
       results['resources'] = { attempted: resources.length, successful: 0, error: e.message };
     }
 
-    // 5. Sync Announcements
+    // 5. Sync Users (Admin, Teachers, Students)
+    const users = db.getRawData().users;
+    try {
+      const payload = users.map((u) => ({
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        full_name: u.fullName,
+        role: u.role,
+        branch_id: u.branchId || null,
+        branch_name: u.branchName || null,
+        phone: u.phone || null,
+        employee_id: u.employeeId || null,
+        admission_no: u.admissionNo || null,
+        designation: u.designation || null,
+        class_id: u.classId || null,
+        class_name: u.className || null,
+        section: u.section || null,
+        assigned_subject_ids: u.assignedSubjectIds || [],
+        assigned_class_ids: u.assignedClassIds || [],
+        is_active: u.isActive !== false,
+        password_hash: u.passwordHash || null,
+      }));
+      const { error } = await client.from('users').upsert(payload);
+      results['users'] = {
+        attempted: users.length,
+        successful: error ? 0 : users.length,
+        error: error?.message,
+      };
+    } catch (e: any) {
+      results['users'] = { attempted: users.length, successful: 0, error: e.message };
+    }
+
+    // 6. Sync Announcements
     const announcements = db.getAnnouncements();
     try {
       const payload = announcements.map((a) => ({
