@@ -168,3 +168,24 @@ VALUES (
   'a8bf76b701e20cf0c59bc46940f520c78271c198462079480abb04baadcb9d25'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 7. SUPABASE STORAGE BUCKET (For Permanent File Uploads)
+-- ==============================================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit)
+VALUES ('dips-resources', 'dips-resources', true, 52428800)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Drop existing storage policies if re-running
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Public Access DIPS Resources" ON storage.objects;
+  DROP POLICY IF EXISTS "Allow Upload DIPS Resources" ON storage.objects;
+  DROP POLICY IF EXISTS "Allow Update DIPS Resources" ON storage.objects;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
+
+CREATE POLICY "Public Access DIPS Resources" ON storage.objects FOR SELECT USING (bucket_id = 'dips-resources');
+CREATE POLICY "Allow Upload DIPS Resources" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'dips-resources');
+CREATE POLICY "Allow Update DIPS Resources" ON storage.objects FOR UPDATE USING (bucket_id = 'dips-resources');

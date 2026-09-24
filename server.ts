@@ -14,6 +14,8 @@ import { activityLogRouter } from './server/routes/activityLogRoutes.js';
 import { dashboardRouter } from './server/routes/dashboardRoutes.js';
 import { settingRouter } from './server/routes/settingRoutes.js';
 import { supabaseRouter } from './server/routes/supabaseRoutes.js';
+import { loadUsersFromSupabase, loadResourcesFromSupabase } from './server/supabase.js';
+import { db } from './server/db.js';
 
 dotenv.config();
 
@@ -64,8 +66,26 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', async () => {
     console.log(`DIPS Centralized Portal server running on http://0.0.0.0:${PORT}`);
+
+    // Hydrate registered users and uploaded resources from Supabase PostgreSQL
+    try {
+      const [remoteUsers, remoteResources] = await Promise.all([
+        loadUsersFromSupabase(),
+        loadResourcesFromSupabase(),
+      ]);
+      if (remoteUsers.length > 0) {
+        db.mergeRemoteUsers(remoteUsers);
+        console.log(`[Supabase] Loaded ${remoteUsers.length} persistent user account(s).`);
+      }
+      if (remoteResources.length > 0) {
+        db.mergeRemoteResources(remoteResources);
+        console.log(`[Supabase] Loaded ${remoteResources.length} persistent resource(s).`);
+      }
+    } catch (e: any) {
+      console.warn('[Supabase] Initial remote sync notice:', e?.message);
+    }
   });
 }
 
