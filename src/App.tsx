@@ -107,11 +107,13 @@ export default function App() {
     if (versionModalResource && versionModalResource.id === resourceId) {
       setVersionModalResource(res.resource);
     }
+    window.dispatchEvent(new CustomEvent('dips_resource_uploaded', { detail: { resource: res.resource } }));
     alert(`Version ${res.resource.currentVersion} published successfully!`);
   };
 
   const handleCreateResourceSubmit = async (formData: FormData) => {
-    await api.createResource(formData);
+    const res = await api.createResource(formData);
+    window.dispatchEvent(new CustomEvent('dips_resource_uploaded', { detail: { resource: res?.resource } }));
     alert('Educational resource published successfully to DIPS Central Portal!');
   };
 

@@ -207,7 +207,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Center: Global Search Bar */}
-        <div ref={searchContainerRef} className="flex-1 max-w-md lg:max-w-lg relative mx-1 sm:mx-2">
+        <div ref={searchContainerRef} className="flex-1 max-w-md lg:max-w-lg relative mx-1 sm:mx-2 min-w-0">
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
@@ -216,8 +216,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
-              placeholder="Search resources by title, subject, or class..."
-              className="w-full pl-9 pr-14 sm:pr-20 py-2 text-xs bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl text-slate-900 placeholder-slate-400 transition-all shadow-2xs outline-none"
+              placeholder="Search resources, subjects, classes..."
+              className="w-full pl-9 pr-10 sm:pr-20 py-2 text-xs bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl text-slate-900 placeholder-slate-400 transition-all shadow-2xs outline-none"
             />
             
             <div className="absolute right-2.5 flex items-center gap-1.5">
@@ -436,7 +436,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {showNotifs && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+              <div className="fixed sm:absolute inset-x-3 sm:inset-x-auto right-auto sm:right-0 top-16 sm:top-auto sm:mt-2 w-auto sm:w-96 max-w-[calc(100vw-24px)] bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
                 <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-900">Notifications ({unreadCount} unread)</span>
                   {unreadCount > 0 && (

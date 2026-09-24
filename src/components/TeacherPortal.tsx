@@ -173,11 +173,19 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
       }
     };
 
+    const handleResourceUploaded = () => {
+      loadData();
+      setActiveTab('my_uploads');
+      showToast('New resource synced & available in My Contributions!');
+    };
+
     window.addEventListener('dips_bookmarks_updated', handleBookmarksUpdated);
     window.addEventListener('dips_navigate_tab', handleNavigateTab);
+    window.addEventListener('dips_resource_uploaded', handleResourceUploaded);
     return () => {
       window.removeEventListener('dips_bookmarks_updated', handleBookmarksUpdated);
       window.removeEventListener('dips_navigate_tab', handleNavigateTab);
+      window.removeEventListener('dips_resource_uploaded', handleResourceUploaded);
     };
   }, [currentUser.id]);
 
@@ -211,9 +219,19 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
     return true;
   });
 
-  const myUploads = resources.filter(
-    (r) => r.uploadedByUserId === currentUser.id || r.lastUpdatedByUserId === currentUser.id
-  );
+  const myUploads = useMemo(() => {
+    const userId = currentUser.id;
+    const userName = currentUser.fullName?.toLowerCase().trim();
+    const empId = currentUser.employeeId?.toLowerCase().trim();
+
+    return resources.filter((r) => {
+      if (r.uploadedByUserId && r.uploadedByUserId === userId) return true;
+      if (r.lastUpdatedByUserId && r.lastUpdatedByUserId === userId) return true;
+      if (userName && r.uploadedByName && r.uploadedByName.toLowerCase().trim() === userName) return true;
+      if (empId && r.uploadedByEmployeeId && r.uploadedByEmployeeId.toLowerCase().trim() === empId) return true;
+      return false;
+    });
+  }, [resources, currentUser]);
 
   // Teacher Favorite / Bookmarked resources (from all resources or accessible)
   const favoriteResources = resources.filter((r) => bookmarkedIds.includes(r.id));
@@ -292,7 +310,20 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              onClick={() => {
+                loadData();
+                showToast('Refreshed curriculum resources');
+              }}
+              disabled={loading}
+              className="p-2.5 sm:px-3 text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-white/15"
+              title="Refresh resources from central server"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-300' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+
             <button
               onClick={() => onOpenUpload(selectedSubjectId, selectedClassId)}
               className="px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
@@ -372,6 +403,82 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
       {/* 1. SUBJECT CURRICULUM EXPLORER */}
       {activeTab === 'navigator' && (
         <div className="space-y-6">
+          {/* Quick Highlight of Teacher's Own Recent Contributions */}
+          {myUploads.length > 0 && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/50 border border-indigo-100 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Your Recent Uploads & Contributions ({myUploads.length})
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setActiveTab('my_uploads')}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>View All in My Contributions</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {myUploads.slice(0, 3).map((res) => {
+                  const isImage =
+                    res.contentType === 'Images' ||
+                    /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(res.fileUrl) ||
+                    /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(res.fileName);
+
+                  return (
+                    <div
+                      key={res.id}
+                      className="p-3 bg-white rounded-xl border border-indigo-100/80 shadow-2xs hover:border-indigo-300 transition-all flex items-start gap-3"
+                    >
+                      {isImage ? (
+                        <div className="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                          <img
+                            src={res.fileUrl}
+                            alt={res.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 font-bold text-xs">
+                          {res.contentType.slice(0, 3).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-bold text-indigo-700 truncate">
+                            {res.subjectName} • {res.className}
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                            v{res.currentVersion}
+                          </span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900 truncate leading-snug">
+                          {res.title}
+                        </h5>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1">
+                          <span>{res.category}</span>
+                          <button
+                            onClick={() => onPreviewResource(res)}
+                            className="text-indigo-600 hover:text-indigo-800 font-bold hover:underline cursor-pointer"
+                          >
+                            Preview →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Step 1: Select Subject */}
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1015,69 +1122,164 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
       {/* 4. MY UPLOADS & CONTRIBUTIONS */}
       {activeTab === 'my_uploads' && (
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">My Educational Contributions</h3>
-            <p className="text-xs text-slate-500">
-              Content and version updates published under your account ({currentUser.fullName})
-            </p>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-indigo-600/10 via-indigo-500/5 to-transparent border border-indigo-200/60">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  My Educational Contributions ({myUploads.length})
+                </h3>
+                <p className="text-xs text-slate-600">
+                  Materials, assignments, question papers, and images uploaded under your account ({currentUser.fullName})
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onOpenUpload(selectedSubjectId, selectedClassId)}
+              className="px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Upload New Material</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myUploads.map((res) => {
-              const isFav = bookmarkedIds.includes(res.id);
-              return (
-                <div key={res.id} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700">
-                      {res.subjectName} • {res.className}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200">
-                        v{res.currentVersion}
-                      </span>
-                      <BookmarkButton
-                        isBookmarked={isFav}
-                        onToggle={() => handleToggleBookmark(res)}
-                        size="xs"
-                        activeColor="amber"
-                      />
+          {myUploads.length === 0 ? (
+            <div className="p-10 text-center bg-white rounded-2xl border border-dashed border-slate-300 space-y-4">
+              <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                <Upload className="w-7 h-7" />
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h4 className="text-base font-bold text-slate-900">No Content Uploaded Yet</h4>
+                <p className="text-xs text-slate-500">
+                  You haven't uploaded any study materials, diagrams, images, or worksheets yet. Click the button below to publish your first resource to the DIPS network.
+                </p>
+              </div>
+              <button
+                onClick={() => onOpenUpload(selectedSubjectId, selectedClassId)}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Upload First Resource</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {myUploads.map((res) => {
+                const isFav = bookmarkedIds.includes(res.id);
+                const isImage =
+                  res.contentType === 'Images' ||
+                  /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(res.fileUrl) ||
+                  /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(res.fileName);
+
+                return (
+                  <div
+                    key={res.id}
+                    className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      {/* Image Thumbnail Header if Image */}
+                      {isImage && (
+                        <div
+                          onClick={() => onPreviewResource(res)}
+                          className="w-full h-36 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden cursor-pointer relative group"
+                        >
+                          <img
+                            src={res.fileUrl}
+                            alt={res.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                            <Eye className="w-4 h-4" /> Click to Preview
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {res.subjectName}
+                          </span>
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700">
+                            {res.className}
+                          </span>
+                          <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-800 border border-amber-200">
+                            {res.contentType}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            v{res.currentVersion}
+                          </span>
+                          <BookmarkButton
+                            isBookmarked={isFav}
+                            onToggle={() => handleToggleBookmark(res)}
+                            size="sm"
+                            activeColor="amber"
+                          />
+                        </div>
+                      </div>
+
+                      <h4 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
+                        {res.title}
+                      </h4>
+
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs space-y-1">
+                        <div className="text-slate-700">
+                          Chapter: <span className="font-semibold text-slate-900">{res.chapter}</span>
+                        </div>
+                        <div className="text-slate-700 truncate">
+                          Topic: <span className="font-semibold text-slate-900">{res.topic}</span>
+                        </div>
+                      </div>
+
+                      {res.description && (
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                          {res.description}
+                        </p>
+                      )}
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                        <span>Uploaded: {new Date(res.createdAt).toLocaleDateString()}</span>
+                        <span>{res.downloadsCount || 0} Downloads</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <h4 className="text-sm font-bold text-slate-900">{res.title}</h4>
-                  <div className="flex items-center justify-between">
-                    <StarRatingBadge
-                      rating={res.averageRating}
-                      count={res.ratingsCount}
-                      showZero={false}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Chapter: {res.chapter} • Topic: {res.topic}
-                  </p>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span>{res.downloadsCount || 0} Downloads</span>
-                    <div className="flex items-center gap-2">
+                    {/* Action Bar */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-1.5">
                       <button
                         onClick={() => onPreviewResource(res)}
-                        className="text-indigo-600 font-semibold hover:underline cursor-pointer"
+                        className="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        Preview
+                        <Eye className="w-3.5 h-3.5" /> Preview
                       </button>
+
                       <button
                         onClick={() => onOpenVersions(res)}
-                        className="text-amber-700 font-semibold hover:underline cursor-pointer"
+                        className="px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-900 hover:bg-amber-50 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        Versions ({res.versions?.length || 1})
+                        <History className="w-3.5 h-3.5" /> Revisions ({res.versions?.length || 1})
+                      </button>
+
+                      <button
+                        onClick={() => onDownload(res)}
+                        className="p-1.5 text-slate-600 hover:text-indigo-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                        title="Download file"
+                      >
+                        <Download className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

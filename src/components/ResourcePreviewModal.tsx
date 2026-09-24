@@ -60,6 +60,10 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
 
   const isExternalLink = resource.contentType.includes('Link') || resource.fileUrl.startsWith('http');
   const isVideo = resource.contentType === 'Video' || resource.fileName.endsWith('.mp4');
+  const isImage =
+    resource.contentType === 'Images' ||
+    /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(resource.fileUrl) ||
+    /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(resource.fileName);
 
   const userRating = currentUser && resource.ratings?.find((r) => r.userId === currentUser.id);
 
@@ -192,6 +196,27 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
               {isVideo ? (
                 <div className="w-full max-w-lg aspect-video bg-black rounded-lg flex items-center justify-center">
                   <p className="text-sm text-slate-400">Embedded Video Player Ready</p>
+                </div>
+              ) : isImage ? (
+                <div className="w-full max-w-2xl space-y-3">
+                  <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden max-h-[380px]">
+                    <img
+                      src={resource.fileUrl}
+                      alt={resource.title}
+                      className="max-h-[360px] w-auto max-w-full object-contain rounded-lg shadow-lg"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span>{resource.fileName}</span>
+                    <a
+                      href={resource.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1 hover:underline"
+                    >
+                      Open Full Size <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 </div>
               ) : isExternalLink ? (
                 <div className="space-y-3">
