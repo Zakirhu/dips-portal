@@ -169,6 +169,24 @@ export interface Resource {
   downloadsCount: number;
   viewsCount: number;
   approvalRemarks?: string;
+
+  // Star Ratings & Feedback
+  averageRating?: number;
+  ratingsCount?: number;
+  ratings?: ResourceRating[];
+}
+
+export interface ResourceRating {
+  id: string;
+  resourceId: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  userBranch?: string;
+  rating: number; // 1 to 5 stars
+  feedback?: string; // Optional review or comment
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Announcement {
@@ -191,7 +209,7 @@ export interface AppNotification {
   userId: string;
   title: string;
   message: string;
-  type: 'resource_upload' | 'resource_updated' | 'announcement' | 'approval' | 'system';
+  type: 'resource_upload' | 'resource_updated' | 'announcement' | 'approval' | 'system' | 'rating';
   link?: string;
   isRead: boolean;
   createdAt: string;
@@ -203,7 +221,7 @@ export interface ActivityLog {
   userName: string;
   userRole: UserRole;
   branchName: string;
-  action: 'UPLOAD' | 'UPDATE' | 'DOWNLOAD' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RESTORE' | 'LOGIN';
+  action: 'UPLOAD' | 'UPDATE' | 'DOWNLOAD' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RESTORE' | 'LOGIN' | 'RATE';
   resourceTitle?: string;
   subjectName?: string;
   details: string;

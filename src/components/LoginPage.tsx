@@ -18,6 +18,25 @@ import {
   Briefcase,
   Layers,
   Sparkles,
+  Award,
+  Globe2,
+  FileText,
+  Users,
+  Check,
+  ChevronRight,
+  Download,
+  Share2,
+  Flame,
+  HelpCircle,
+  ExternalLink,
+  ShieldCheck,
+  Search,
+  MapPin,
+  X,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Sparkle,
 } from 'lucide-react';
 import type { UserRole, User as UserType, Branch, AcademicClass, Subject } from '../types.js';
 import { api, setStoredAuth } from '../lib/api.js';
@@ -29,13 +48,19 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>('admin');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [username, setUsername] = useState('dipsbegowal@gmail.com');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Metadata for teacher registration
+  // Branch showcase interactive state
+  const [branchSearch, setBranchSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState<'all' | 'colleges' | 'jalandhar' | 'hoshiarpur' | 'kapurthala' | 'amritsar_gurdaspur'>('all');
+
+  // Metadata for teacher registration & display
   const [branches, setBranches] = useState<Branch[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
@@ -79,17 +104,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       .catch(() => {});
   }, []);
 
-  // Set default placeholder/value when role changes
+  // Reset inputs when role changes
   useEffect(() => {
     setError('');
     setSuccessMsg('');
-    if (selectedRole === 'admin') {
-      setUsername('dipsbegowal@gmail.com');
-      setPassword('');
-    } else {
-      setUsername('');
-      setPassword('');
-    }
+    setUsername('');
+    setPassword('');
   }, [selectedRole]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -159,7 +179,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       setUsername(res.user.employeeId || res.user.email);
       setPassword(regForm.password);
 
-      // Automatically store auth and log them in, or let them click
+      // Automatically store auth and log them in
       setStoredAuth(res.token, res.user);
       setTimeout(() => {
         onLoginSuccess(res.user);
@@ -172,505 +192,890 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-between text-slate-100 relative overflow-hidden">
-      {/* Background Subtle Gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))] pointer-events-none" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white font-sans antialiased relative overflow-hidden">
+      {/* Dynamic Background Glowing Meshes */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-amber-500/15 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[20%] w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Top Banner / Branding */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-indigo-400/30 shrink-0">
-            <img
-              src="/dips-logo.png"
-              alt="DIPS Institutions Logo"
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              DIPS INSTITUTIONS
-              <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                Central Portal
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">
-              Centralized Learning & Content Sharing Network for All Branches
-            </p>
-          </div>
-        </div>
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-        <div className="hidden md:flex items-center gap-4 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <Building className="w-4 h-4 text-indigo-400" /> 5 DIPS Branches Connected
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1.5">
-            <School className="w-4 h-4 text-amber-400" /> Academic Year 2026-27
-          </span>
-        </div>
-      </div>
-
-      {/* Center Card */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
-        <div
-          className={`w-full ${
-            isRegisterMode ? 'max-w-xl' : 'max-w-md'
-          } bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transition-all duration-300`}
-        >
-          {/* Card Header */}
-          <div className="p-6 pb-4 text-center border-b border-slate-100 bg-slate-50/50 flex flex-col items-center">
-            <div className="w-16 h-16 mb-2.5 bg-white p-1 rounded-2xl shadow-md border border-slate-200/80 flex items-center justify-center">
+      {/* =========================================================
+          TOP INSTITUTIONAL BRANDING HEADER
+          ========================================================= */}
+      <header className="relative z-20 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-13 h-13 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xl shadow-indigo-950/60 border border-white/30 shrink-0 transform transition-transform hover:scale-105">
               <img
                 src="/dips-logo.png"
-                alt="DIPS Institutions Crest"
-                className="w-full h-full object-contain hover:scale-105 transition-transform"
+                alt="DIPS Institutions Logo"
+                className="w-full h-full object-contain"
                 referrerPolicy="no-referrer"
               />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
-              {isRegisterMode ? 'Faculty Self-Registration' : 'Centralized Portal Login'}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1 max-w-md">
-              {isRegisterMode
-                ? 'Create your institutional faculty account, select your campus branch, and choose your teaching subjects & classes.'
-                : 'Select your institutional role to access your dedicated workspace'}
-            </p>
-
-            {/* Role Selection Tabs (Only shown in Login Mode) */}
-            {!isRegisterMode && (
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/70 rounded-xl mt-4 w-full">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('teacher')}
-                  className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    selectedRole === 'teacher'
-                      ? 'bg-white text-indigo-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Teacher</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('student')}
-                  className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    selectedRole === 'student'
-                      ? 'bg-white text-emerald-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Student</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedRole('admin')}
-                  className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    selectedRole === 'admin'
-                      ? 'bg-white text-amber-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Shield className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Admin</span>
-                </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                  DIPS INSTITUTIONS
+                </h1>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-xs">
+                  <Sparkles className="w-2.5 h-2.5" /> Central Portal
+                </span>
               </div>
-            )}
-
-            {/* Teacher Mode Sub-Toggle (Sign In vs Register Account) */}
-            {selectedRole === 'teacher' && (
-              <div className="flex items-center gap-2 mt-3 p-1 bg-indigo-50/80 rounded-lg border border-indigo-100 text-xs w-full max-w-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegisterMode(false);
-                    setError('');
-                  }}
-                  className={`flex-1 py-1 px-2 font-bold rounded-md transition-all ${
-                    !isRegisterMode
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-indigo-800 hover:text-indigo-950'
-                  }`}
-                >
-                  Teacher Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegisterMode(true);
-                    setError('');
-                  }}
-                  className={`flex-1 py-1 px-2 font-bold rounded-md transition-all flex items-center justify-center gap-1 ${
-                    isRegisterMode
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-indigo-800 hover:text-indigo-950'
-                  }`}
-                >
-                  <UserPlus className="w-3 h-3" />
-                  <span>Create Account</span>
-                </button>
-              </div>
-            )}
+              <p className="text-xs text-slate-400 font-medium tracking-wide">
+                Centralized Academic Directorate & Resource Management Network
+              </p>
+            </div>
           </div>
 
-          {/* Success Banner */}
-          {successMsg && (
-            <div className="mx-6 mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="block font-bold">Account Ready!</strong>
-                <span>{successMsg}</span>
-              </div>
+          <div className="hidden lg:flex items-center gap-6 text-xs text-slate-300">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+              <Building className="w-4 h-4 text-indigo-400" />
+              <span className="font-semibold">{branches.length || 19} Connected Campuses & Institutions</span>
             </div>
-          )}
-
-          {/* Error Banner */}
-          {error && (
-            <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+              <School className="w-4 h-4 text-amber-400" />
+              <span className="font-semibold">Session 2026-27</span>
             </div>
-          )}
+          </div>
+        </div>
+      </header>
 
-          {/* A. TEACHER REGISTRATION FORM */}
-          {isRegisterMode ? (
-            <form onSubmit={handleTeacherRegistration} className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Full Name <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
+      {/* =========================================================
+          MAIN HERO & PORTAL LOGIN CONTAINER
+          ========================================================= */}
+      <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col lg:flex-row items-center justify-between gap-12">
+        {/* LEFT COLUMN: INSTITUTIONAL SHOWCASE & VALUE PROPOSITION */}
+        <div className="flex-1 space-y-8 text-left max-w-2xl">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/25 text-indigo-300 text-xs font-semibold backdrop-blur-md">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Unified Cross-Branch Academic Excellence</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              One Unified Hub for{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-amber-300 to-indigo-200">
+                Curriculum, Lesson Plans & Resources
+              </span>
+            </h2>
+
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+              Connect faculty, students, and academic coordinators across all 19 DIPS colleges and CBSE senior secondary schools. 
+              Share syllabus notes, collaborate on question papers, track revision logs, and download verified educational materials.
+            </p>
+          </div>
+
+          {/* Connected Campuses Badges - Professional Institutional Showcase */}
+          {(() => {
+            const fallbackList = [
+              { id: 'branch-dipsimt', name: 'DIPS Institute of Management & Technology (DIPSIMT)', code: 'DIPSIMT', city: 'Jalandhar', type: 'college' },
+              { id: 'branch-poly-tanda', name: 'DIPS Polytechic College (Tanda)', code: 'DPC-TAN', city: 'Tanda, Hoshiarpur', type: 'college' },
+              { id: 'branch-gilzian', name: 'DIPS School, Gilzian (Hoshiarpur)', code: 'GIL', city: 'Gilzian, Hoshiarpur', type: 'school' },
+              { id: 'branch-urban-estate', name: 'DIPS School, Urban Estate Phase-1', code: 'UE-1', city: 'Jalandhar', type: 'school' },
+              { id: 'branch-suranussi', name: 'DIPS School, Suranussi', code: 'SUR', city: 'Suranussi, Jalandhar', type: 'school' },
+              { id: 'branch-karol-bagh', name: 'DIPS School, Karol Bagh', code: 'KB', city: 'Karol Bagh, Jalandhar', type: 'school' },
+              { id: 'branch-blooming-dales', name: 'DIPS Blooming Dales Public School', code: 'BDPS', city: 'Begowal, Kapurthala', type: 'school' },
+              { id: 'branch-bhogpur', name: 'DIPS School, Bhogpur', code: 'BHG', city: 'Bhogpur, Jalandhar', type: 'school' },
+              { id: 'branch-mehatpur', name: 'DIPS School, Mehatpur', code: 'MHT-JAL', city: 'Mehatpur, Jalandhar', type: 'school' },
+              { id: 'branch-nurmahal', name: 'DIPS School, Nurmahal', code: 'NUR', city: 'Nurmahal, Jalandhar', type: 'school' },
+              { id: 'branch-uggi', name: 'DIPS School, Uggi', code: 'UGG', city: 'Uggi, Jalandhar', type: 'school' },
+              { id: 'branch-batala', name: 'DIPS School, Batala (Gurdaspur)', code: 'BAT', city: 'Batala, Gurdaspur', type: 'school' },
+              { id: 'branch-begowal', name: 'DIPS School, Begowal (Kapurthala)', code: 'BEG', city: 'Begowal, Kapurthala', type: 'school' },
+              { id: 'branch-dhilwan', name: 'DIPS School, Dhilwan (Kapurthala)', code: 'DHL', city: 'Dhilwan, Kapurthala', type: 'school' },
+              { id: 'branch-hariana', name: 'DIPS School, Hariana (Hoshiarpur)', code: 'HAR', city: 'Hariana, Hoshiarpur', type: 'school' },
+              { id: 'branch-kapurthala', name: 'DIPS School, Kapurthala', code: 'KAP', city: 'Kapurthala', type: 'school' },
+              { id: 'branch-mehta-chowk', name: 'DIPS School, Mehta Chowk (Amritsar)', code: 'MHT-ASR', city: 'Mehta Chowk, Amritsar', type: 'school' },
+              { id: 'branch-rayya', name: 'DIPS School, Rayya (Amritsar)', code: 'RAY', city: 'Rayya, Amritsar', type: 'school' },
+              { id: 'branch-tanda', name: 'DIPS School, Tanda (Hoshiarpur)', code: 'TAN', city: 'Tanda, Hoshiarpur', type: 'school' },
+            ];
+
+            const activeBranches = (branches.length > 0 ? branches : fallbackList)
+              .filter(
+                (b) =>
+                  b.id !== 'branch-kartarpur' &&
+                  !b.name.toLowerCase().includes('kartarpur') &&
+                  b.id !== 'branch-edu-tanda' &&
+                  !b.name.toLowerCase().includes('college of education') &&
+                  b.id !== 'branch-dasuya' &&
+                  !b.name.toLowerCase().includes('dasuya')
+              )
+              .map((b) => {
+                const isCollege =
+                  b.name.toLowerCase().includes('college') ||
+                  b.name.toLowerCase().includes('institute') ||
+                  b.name.toLowerCase().includes('polytech');
+                let region = 'other';
+                const lowerCity = (b.city || '').toLowerCase();
+                const lowerName = b.name.toLowerCase();
+                if (
+                  lowerCity.includes('jalandhar') ||
+                  lowerName.includes('jalandhar') ||
+                  lowerName.includes('urban estate') ||
+                  lowerName.includes('suranussi') ||
+                  lowerName.includes('karol bagh') ||
+                  lowerName.includes('bhogpur') ||
+                  lowerName.includes('mehatpur') ||
+                  lowerName.includes('nurmahal') ||
+                  lowerName.includes('uggi')
+                ) {
+                  region = 'jalandhar';
+                } else if (
+                  lowerCity.includes('hoshiarpur') ||
+                  lowerCity.includes('tanda') ||
+                  lowerCity.includes('hariana') ||
+                  lowerCity.includes('gilzian') ||
+                  lowerName.includes('hoshiarpur') ||
+                  lowerName.includes('tanda') ||
+                  lowerName.includes('hariana') ||
+                  lowerName.includes('gilzian')
+                ) {
+                  region = 'hoshiarpur';
+                } else if (
+                  lowerCity.includes('kapurthala') ||
+                  lowerCity.includes('begowal') ||
+                  lowerCity.includes('dhilwan') ||
+                  lowerName.includes('kapurthala') ||
+                  lowerName.includes('begowal') ||
+                  lowerName.includes('dhilwan') ||
+                  lowerName.includes('blooming dales')
+                ) {
+                  region = 'kapurthala';
+                } else if (
+                  lowerCity.includes('amritsar') ||
+                  lowerCity.includes('gurdaspur') ||
+                  lowerCity.includes('batala') ||
+                  lowerCity.includes('mehta') ||
+                  lowerCity.includes('rayya') ||
+                  lowerName.includes('amritsar') ||
+                  lowerName.includes('gurdaspur') ||
+                  lowerName.includes('batala') ||
+                  lowerName.includes('mehta') ||
+                  lowerName.includes('rayya')
+                ) {
+                  region = 'amritsar_gurdaspur';
+                }
+
+                return {
+                  ...b,
+                  isCollege,
+                  region,
+                };
+              });
+
+            const filteredBranches = activeBranches.filter(b => {
+              // Region Filter
+              if (branchFilter === 'colleges' && !b.isCollege) return false;
+              if (branchFilter === 'jalandhar' && b.region !== 'jalandhar') return false;
+              if (branchFilter === 'hoshiarpur' && b.region !== 'hoshiarpur') return false;
+              if (branchFilter === 'kapurthala' && b.region !== 'kapurthala') return false;
+              if (branchFilter === 'amritsar_gurdaspur' && b.region !== 'amritsar_gurdaspur') return false;
+
+              // Search Filter
+              if (branchSearch.trim()) {
+                const query = branchSearch.toLowerCase();
+                return b.name.toLowerCase().includes(query) || (b.city || '').toLowerCase().includes(query) || (b.code || '').toLowerCase().includes(query);
+              }
+              return true;
+            });
+
+            return (
+              <div className="rounded-2xl bg-slate-900/80 border border-slate-800/90 backdrop-blur-md p-4 space-y-3.5 shadow-xl shadow-slate-950/40">
+                {/* Header & Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                      <Building className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white tracking-wide">
+                          DIPS Institutional Network
+                        </span>
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          {activeBranches.length} Campuses
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        Colleges, Polytechnics & CBSE Senior Secondary Schools
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative min-w-[170px] sm:w-48">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     <input
                       type="text"
-                      value={regForm.fullName}
-                      onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
-                      placeholder="e.g. Mrs. Jaspreet Kaur"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                      required
+                      value={branchSearch}
+                      onChange={(e) => setBranchSearch(e.target.value)}
+                      placeholder="Search campus or city..."
+                      className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-slate-950/70 border border-slate-700/80 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                     />
+                    {branchSearch && (
+                      <button
+                        onClick={() => setBranchSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                        title="Clear search"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Email Address <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="email"
-                      value={regForm.email}
-                      onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                      placeholder="e.g. jaspreet.k@dips.edu.in"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Campus Branch <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <select
-                      value={regForm.branchId}
-                      onChange={(e) => setRegForm({ ...regForm, branchId: e.target.value })}
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 text-xs"
-                      required
+                {/* Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 text-[11px]">
+                  {[
+                    { key: 'all', label: `All (${activeBranches.length})` },
+                    { key: 'colleges', label: `Colleges & Institutes (${activeBranches.filter(b => b.isCollege).length})` },
+                    { key: 'jalandhar', label: `Jalandhar (${activeBranches.filter(b => b.region === 'jalandhar').length})` },
+                    { key: 'hoshiarpur', label: `Hoshiarpur (${activeBranches.filter(b => b.region === 'hoshiarpur').length})` },
+                    { key: 'kapurthala', label: `Kapurthala (${activeBranches.filter(b => b.region === 'kapurthala').length})` },
+                    { key: 'amritsar_gurdaspur', label: `Amritsar & Gurdaspur (${activeBranches.filter(b => b.region === 'amritsar_gurdaspur').length})` },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setBranchFilter(tab.key as any)}
+                      className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer ${
+                        branchFilter === tab.key
+                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                          : 'bg-slate-800/70 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      }`}
                     >
-                      {branches.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name} ({b.city})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
 
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Employee ID <span className="text-slate-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={regForm.employeeId}
-                    onChange={(e) => setRegForm({ ...regForm, employeeId: e.target.value })}
-                    placeholder="Leave blank to auto-assign"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
+                {/* Branch Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700">
+                  {filteredBranches.length > 0 ? (
+                    filteredBranches.map((c) => {
+                      const displayName = c.name.replace(/^DIPS School,\s*/, '').replace(/^DIPS\s*/, '');
+                      return (
+                        <div
+                          key={c.id}
+                          className={`group p-2.5 rounded-xl border transition-all duration-200 flex items-start gap-2.5 ${
+                            c.isCollege
+                              ? 'bg-gradient-to-r from-amber-500/10 to-indigo-500/10 border-amber-500/30 hover:border-amber-400/60 shadow-xs'
+                              : 'bg-slate-950/60 border-slate-800/90 hover:border-indigo-500/40 hover:bg-slate-900/90'
+                          }`}
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                              c.isCollege
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                : 'bg-slate-800 text-slate-300 border border-slate-700 group-hover:text-indigo-400 group-hover:border-indigo-500/30'
+                            }`}
+                          >
+                            {c.isCollege ? <GraduationCap className="w-3.5 h-3.5" /> : <School className="w-3.5 h-3.5" />}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <h4 className="text-xs font-semibold text-white truncate group-hover:text-indigo-300 transition-colors">
+                                {c.name.includes('DIPS') ? c.name : `DIPS ${c.name}`}
+                              </h4>
+                              {c.isCollege ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 shrink-0">
+                                  Higher Ed
+                                </span>
+                              ) : c.code ? (
+                                <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">
+                                  {c.code}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5 truncate">
+                              <MapPin className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+                              <span className="truncate">{c.city || 'Punjab'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-2 py-6 text-center text-xs text-slate-400">
+                      No campuses match &ldquo;{branchSearch}&rdquo;. Try another keyword.
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Value Feature Highlights */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 backdrop-blur-xs flex items-start gap-3.5 hover:bg-slate-900/90 transition-all">
+              <div className="w-9 h-9 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Full Version History</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-normal">
+                  Track every revision, changelog, and rollback previous lesson plan updates.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 backdrop-blur-xs flex items-start gap-3.5 hover:bg-slate-900/90 transition-all">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <Share2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Inter-Branch Collaboration</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-normal">
+                  Teachers co-author assessments and share quality teaching modules across campuses.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 backdrop-blur-xs flex items-start gap-3.5 hover:bg-slate-900/90 transition-all">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <Download className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Direct Student Access</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-normal">
+                  Search chapter-wise notes, download sample papers, and preview multimedia in 1-click.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 backdrop-blur-xs flex items-start gap-3.5 hover:bg-slate-900/90 transition-all">
+              <div className="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">Admin Oversight</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-normal">
+                  Role-based access, automated audit logs, and branch-wise compliance reporting.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: INTERACTIVE SIGN IN & REGISTRATION PORTAL CARD */}
+        <div className="w-full max-w-md lg:max-w-lg shrink-0">
+          <div className="relative bg-slate-900/95 backdrop-blur-xl text-white rounded-3xl shadow-2xl shadow-slate-950/90 border border-slate-700/80 overflow-hidden">
+            {/* Top Accent Gradient Bar */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 via-amber-400 to-indigo-500" />
+
+            {/* Card Top Institutional Header */}
+            <div className="p-6 pb-5 border-b border-slate-800/90 bg-slate-950/60 flex flex-col items-center text-center relative">
+              {/* Security Badge in Top-Right */}
+              <div className="absolute top-4 right-4 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800/90 border border-slate-700 text-[10px] font-medium text-slate-300">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span>SSL Encrypted</span>
+              </div>
+
+              {/* Institutional Crest Framing */}
+              <div className="relative mb-3 group">
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-indigo-500 via-amber-400 to-indigo-500 opacity-30 blur-xs group-hover:opacity-60 transition duration-300" />
+                <div className="relative w-14 h-14 bg-white p-1.5 rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center">
+                  <img
+                    src="/dips-logo.png"
+                    alt="DIPS Crest"
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Academic Designation
-                  </label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={regForm.designation}
-                      onChange={(e) => setRegForm({ ...regForm, designation: e.target.value })}
-                      placeholder="e.g. PGT Science / TGT Math"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                    />
+              <div className="space-y-1">
+                <div className="flex items-center justify-center gap-1.5">
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                    {isRegisterMode ? 'Faculty Self-Registration' : 'DIPS Central Portal Access'}
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400 max-w-sm font-medium">
+                  {isRegisterMode
+                    ? 'Register your official institutional profile, select campus branch & assign subjects'
+                    : 'Centralized Academic & Curriculum Network for DIPS Institutions'}
+                </p>
+              </div>
+
+              {/* Segmented Institutional Role Navigation Switcher (Only in Login mode) */}
+              {!isRegisterMode && (
+                <div className="w-full mt-4 space-y-2">
+                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole('teacher');
+                        setError('');
+                      }}
+                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                        selectedRole === 'teacher'
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/40 ring-1 ring-indigo-400'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Faculty</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole('student');
+                        setError('');
+                      }}
+                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                        selectedRole === 'student'
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/40 ring-1 ring-emerald-400'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>Student</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole('admin');
+                        setError('');
+                      }}
+                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                        selectedRole === 'admin'
+                          ? 'bg-amber-600 text-white shadow-md shadow-amber-600/40 ring-1 ring-amber-400'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>Admin</span>
+                    </button>
+                  </div>
+
+                  {/* Contextual Role Hint Subtitle */}
+                  <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400 pt-0.5">
+                    {selectedRole === 'teacher' && (
+                      <span className="text-indigo-300 flex items-center gap-1">
+                        <Sparkle className="w-2.5 h-2.5 text-indigo-400" />
+                        Faculty Workspace: Lesson plans, question banks & revision notes
+                      </span>
+                    )}
+                    {selectedRole === 'student' && (
+                      <span className="text-emerald-300 flex items-center gap-1">
+                        <Sparkle className="w-2.5 h-2.5 text-emerald-400" />
+                        Student Portal: Notes download, curriculum & syllabus material
+                      </span>
+                    )}
+                    {selectedRole === 'admin' && (
+                      <span className="text-amber-300 flex items-center gap-1">
+                        <Sparkle className="w-2.5 h-2.5 text-amber-400" />
+                        Directorate Console: Campus branches, user audits & configurations
+                      </span>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Contact Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="tel"
-                      value={regForm.phone}
-                      onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Set Password <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="password"
-                      value={regForm.password}
-                      onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
-                      placeholder="Min 6 characters"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Confirm Password <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                    <input
-                      type="password"
-                      value={regForm.confirmPassword}
-                      onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
-                      placeholder="Re-enter password"
-                      className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Subject Selection */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-semibold text-slate-700">
-                    Teaching Subjects (Select one or more)
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {regForm.assignedSubjectIds.length} Selected
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg max-h-28 overflow-y-auto">
-                  {subjects.map((sub) => {
-                    const isChecked = regForm.assignedSubjectIds.includes(sub.id);
-                    return (
-                      <button
-                        type="button"
-                        key={sub.id}
-                        onClick={() => {
-                          const cur = regForm.assignedSubjectIds;
-                          setRegForm({
-                            ...regForm,
-                            assignedSubjectIds: isChecked
-                              ? cur.filter((id) => id !== sub.id)
-                              : [...cur, sub.id],
-                          });
-                        }}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all flex items-center gap-1 ${
-                          isChecked
-                            ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
-                        }`}
-                      >
-                        <span>{sub.name}</span>
-                        {isChecked && <CheckCircle2 className="w-3 h-3" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Class Selection */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-semibold text-slate-700">
-                    Teaching Classes (Select all that apply)
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {regForm.assignedClassIds.length} Selected
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg">
-                  {classes.map((cls) => {
-                    const isChecked = regForm.assignedClassIds.includes(cls.id);
-                    return (
-                      <button
-                        type="button"
-                        key={cls.id}
-                        onClick={() => {
-                          const cur = regForm.assignedClassIds;
-                          setRegForm({
-                            ...regForm,
-                            assignedClassIds: isChecked
-                              ? cur.filter((id) => id !== cls.id)
-                              : [...cur, cls.id],
-                          });
-                        }}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all flex items-center gap-1 ${
-                          isChecked
-                            ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
-                        }`}
-                      >
-                        <span>{cls.code || cls.name}</span>
-                        {isChecked && <CheckCircle2 className="w-3 h-3" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-2 space-y-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>{loading ? 'Registering Account...' : 'Create Faculty Account & Enter Portal'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsRegisterMode(false)}
-                  className="w-full py-2 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Already registered? Back to Teacher Sign In</span>
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* B. STANDARD SIGN IN FORM */
-            <form onSubmit={handleLogin} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {selectedRole === 'teacher'
-                    ? 'Teacher Employee ID / Email'
-                    : selectedRole === 'student'
-                    ? 'Student ID / Admission Number'
-                    : 'Administrator Username / Email'}
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={
-                      selectedRole === 'teacher'
-                        ? 'e.g. Employee ID or registered email'
-                        : selectedRole === 'student'
-                        ? 'e.g. Admission / Roll No.'
-                        : 'dipsbegowal@gmail.com'
-                    }
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-700">Password</label>
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    {selectedRole === 'admin' ? 'Authorized Admin Access' : 'Institutional Credentials'}
-                  </span>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full py-2.5 text-xs font-bold text-white rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 ${
-                  selectedRole === 'teacher'
-                    ? 'bg-indigo-600 hover:bg-indigo-700'
-                    : selectedRole === 'student'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-amber-600 hover:bg-amber-700'
-                } disabled:opacity-50`}
-              >
-                <span>{loading ? 'Authenticating...' : `Enter ${selectedRole.toUpperCase()} Portal`}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              {/* Teacher Self-Registration Callout inside login form */}
-              {selectedRole === 'teacher' && (
-                <div className="pt-2 text-center border-t border-slate-100">
+              {/* Teacher Sub-Mode Toggle */}
+              {selectedRole === 'teacher' && !isRegisterMode && (
+                <div className="flex items-center justify-between w-full mt-3 pt-2.5 border-t border-slate-800/80 text-xs">
+                  <span className="text-slate-400 text-[11px]">Looking to register?</span>
                   <button
                     type="button"
                     onClick={() => {
                       setIsRegisterMode(true);
                       setError('');
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
-                    <span>New DIPS Faculty Member? Create your account here</span>
+                    <span>+ New Faculty Registration</span>
                   </button>
                 </div>
               )}
-            </form>
-          )}
-        </div>
-      </div>
+            </div>
 
-      {/* Footer */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-4 text-center text-xs text-slate-500">
-        <p>© 2026 DIPS Chain of Institutions • Central Academic Directorate & Resource Management System</p>
-      </div>
+            {/* Error & Success Alerts */}
+            {error && (
+              <div className="mx-6 mt-4 p-3 bg-rose-950/60 border border-rose-800/80 rounded-xl text-xs text-rose-200 flex items-center gap-2.5 shadow-sm">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span className="font-medium">{error}</span>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="mx-6 mt-4 p-3 bg-emerald-950/60 border border-emerald-800/80 rounded-xl text-xs text-emerald-200 flex items-center gap-2.5 shadow-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-medium">{successMsg}</span>
+              </div>
+            )}
+
+            {/* =========================================================
+                FORM A: FACULTY SELF-REGISTRATION
+                ========================================================= */}
+            {isRegisterMode ? (
+              <form onSubmit={handleTeacherRegistration} className="p-6 space-y-4 text-xs max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Full Legal Name <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regForm.fullName}
+                        onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
+                        placeholder="e.g. Jaspreet Kaur"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Official Email Address <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="email"
+                        value={regForm.email}
+                        onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                        placeholder="e.g. jaspreet.k@dips.edu.in"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Campus Branch <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Building className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <select
+                        value={regForm.branchId}
+                        onChange={(e) => setRegForm({ ...regForm, branchId: e.target.value })}
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                        required
+                      >
+                        {branches.map((b) => (
+                          <option key={b.id} value={b.id} className="bg-slate-900 text-white">
+                            {b.name} ({b.city})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Employee ID <span className="text-slate-500 font-normal">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regForm.employeeId}
+                        onChange={(e) => setRegForm({ ...regForm, employeeId: e.target.value })}
+                        placeholder="Auto-generated if empty"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Designation
+                    </label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regForm.designation}
+                        onChange={(e) => setRegForm({ ...regForm, designation: e.target.value })}
+                        placeholder="e.g. PGT Science / TGT Math"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Contact Phone
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="tel"
+                        value={regForm.phone}
+                        onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                        placeholder="+91 98765 43210"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Set Password <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={regForm.password}
+                        onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                        placeholder="Min. 6 characters"
+                        className="w-full pl-9 pr-9 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-white cursor-pointer"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Confirm Password <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={regForm.confirmPassword}
+                        onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
+                        placeholder="Re-enter password"
+                        className="w-full pl-9 pr-9 py-2 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs transition-colors"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-white cursor-pointer"
+                        title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subject Allocation */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-slate-300">
+                      Teaching Subjects (Select all that apply)
+                    </label>
+                    <span className="text-[11px] text-indigo-400 font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                      {regForm.assignedSubjectIds.length} Selected
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                    {subjects.map((sub) => {
+                      const isChecked = regForm.assignedSubjectIds.includes(sub.id);
+                      return (
+                        <button
+                          type="button"
+                          key={sub.id}
+                          onClick={() => {
+                            const cur = regForm.assignedSubjectIds;
+                            setRegForm({
+                              ...regForm,
+                              assignedSubjectIds: isChecked
+                                ? cur.filter((id) => id !== sub.id)
+                                : [...cur, sub.id],
+                            });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 cursor-pointer ${
+                            isChecked
+                              ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
+                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500 hover:bg-slate-850'
+                          }`}
+                        >
+                          <span>{sub.name}</span>
+                          {isChecked && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Class Allocation */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-slate-300">
+                      Teaching Classes (Select all that apply)
+                    </label>
+                    <span className="text-[11px] text-indigo-400 font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                      {regForm.assignedClassIds.length} Selected
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                    {classes.map((cls) => {
+                      const isChecked = regForm.assignedClassIds.includes(cls.id);
+                      return (
+                        <button
+                          type="button"
+                          key={cls.id}
+                          onClick={() => {
+                            const cur = regForm.assignedClassIds;
+                            setRegForm({
+                              ...regForm,
+                              assignedClassIds: isChecked
+                                ? cur.filter((id) => id !== cls.id)
+                                : [...cur, cls.id],
+                            });
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 cursor-pointer ${
+                            isChecked
+                              ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
+                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500 hover:bg-slate-850'
+                          }`}
+                        >
+                          <span>{cls.code || cls.name}</span>
+                          {isChecked && <CheckCircle2 className="w-3 h-3 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="pt-2 space-y-2.5">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>{loading ? 'Creating Faculty Account...' : 'Register Faculty Account & Sign In'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsRegisterMode(false)}
+                    className="w-full py-2.5 text-xs font-medium text-slate-300 hover:text-white rounded-xl border border-slate-700 bg-slate-950/50 hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Return to Portal Login</span>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* =========================================================
+                  FORM B: STANDARD LOGIN
+                  ========================================================= */
+              <form onSubmit={handleLogin} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    {selectedRole === 'teacher'
+                      ? 'Faculty Employee ID or Email Address'
+                      : selectedRole === 'student'
+                      ? 'Student Admission Number / ID'
+                      : 'Administrator Username / Security Email'}
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder={
+                        selectedRole === 'teacher'
+                          ? 'Enter Employee ID (e.g. DIPST-001) or Email'
+                          : selectedRole === 'student'
+                          ? 'Enter Student ID (e.g. DIPS-STU-001)'
+                          : 'admin'
+                      }
+                      className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-slate-950/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-300">Security Password</label>
+                    <span className="text-[10px] text-slate-400">
+                      {selectedRole === 'admin' ? 'Authorized Central Access' : 'Institutional Credentials'}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 py-2.5 text-xs bg-slate-950/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-white cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Login Action Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full py-3 text-xs font-bold text-white rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    selectedRole === 'teacher'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-indigo-600/30'
+                      : selectedRole === 'student'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-600/30'
+                      : 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-amber-600/30'
+                  } disabled:opacity-50`}
+                >
+                  <span>{loading ? 'Authenticating Credentials...' : `Enter ${selectedRole === 'teacher' ? 'Faculty' : selectedRole === 'student' ? 'Student' : 'Admin'} Portal`}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                {/* Security Assurance Tag */}
+                <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 text-center">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Protected by DIPS Single Sign-On (SSO) & Academic Data Governance</span>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* =========================================================
+          FOOTER WITH INSTITUTION CREDITS & ACCREDITATION
+          ========================================================= */}
+      <footer className="relative z-20 border-t border-white/10 bg-slate-950 py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Central DIPS Educational Cloud Server • All Systems Operational</span>
+          </div>
+          <p>© 2026 DIPS Chain of Institutions • Academic Directorate & Resource Management System</p>
+        </div>
+      </footer>
     </div>
   );
 };

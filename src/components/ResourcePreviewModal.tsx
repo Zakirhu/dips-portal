@@ -1,28 +1,67 @@
-import React from 'react';
-import { X, Download, FileText, ExternalLink, History, Calendar, User, Building2, Tag, ShieldAlert } from 'lucide-react';
-import type { Resource } from '../types.js';
+import React, { useState, useEffect } from 'react';
+import {
+  X,
+  Download,
+  FileText,
+  ExternalLink,
+  History,
+  Calendar,
+  User,
+  Building2,
+  Tag,
+  ShieldAlert,
+  Star,
+  MessageSquare,
+  Bookmark,
+} from 'lucide-react';
+import type { Resource, User as UserType } from '../types.js';
+import { StarRatingDisplay, StarRatingBadge, RateResourceModal } from './StarRating.js';
+import { BookmarkButton } from './BookmarkButton.js';
+import { getBookmarkedResourceIds, toggleResourceBookmark } from '../lib/bookmarks.js';
 
 interface ResourcePreviewModalProps {
   resource: Resource | null;
+  currentUser?: UserType | null;
   onClose: () => void;
   onDownload: (resource: Resource) => void;
   onOpenVersions?: (resource: Resource) => void;
   canCollaborate?: boolean;
   onCollaborate?: (resource: Resource) => void;
+  onResourceUpdated?: (resource: Resource) => void;
 }
 
 export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
   resource,
+  currentUser,
   onClose,
   onDownload,
   onOpenVersions,
   canCollaborate,
   onCollaborate,
+  onResourceUpdated,
 }) => {
+  const [showRateModal, setShowRateModal] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (currentUser && resource) {
+      const ids = getBookmarkedResourceIds(currentUser.id);
+      setIsBookmarked(ids.includes(resource.id));
+    }
+  }, [currentUser?.id, resource?.id]);
+
   if (!resource) return null;
+
+  const handleToggleBookmark = () => {
+    if (!currentUser) return;
+    const { isBookmarked: newStatus } = toggleResourceBookmark(currentUser.id, resource.id);
+    setIsBookmarked(newStatus);
+  };
 
   const isExternalLink = resource.contentType.includes('Link') || resource.fileUrl.startsWith('http');
   const isVideo = resource.contentType === 'Video' || resource.fileName.endsWith('.mp4');
+
+  const userRating = currentUser && resource.ratings?.find((r) => r.userId === currentUser.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
@@ -52,6 +91,11 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
               <span className="px-2.5 py-0.5 text-xs font-medium rounded-md bg-blue-50 text-blue-700">
                 v{resource.currentVersion}
               </span>
+              <StarRatingBadge
+                rating={resource.averageRating}
+                count={resource.ratingsCount}
+                showZero={true}
+              />
               {resource.status === 'pending_approval' && (
                 <span className="px-2.5 py-0.5 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 flex items-center gap-1">
                   <ShieldAlert className="w-3 h-3" /> Pending Review
@@ -66,13 +110,24 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
           </div>
         </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {currentUser && (
+              <BookmarkButton
+                isBookmarked={isBookmarked}
+                onToggle={handleToggleBookmark}
+                size="md"
+                showLabel={true}
+                activeColor="amber"
+              />
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Body Content / Document Previewer */}
@@ -201,6 +256,113 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
               </p>
             </div>
           )}
+
+          {/* Ratings & Feedback Section */}
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden space-y-3">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">
+                    Community Quality Ratings & Feedback
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Evaluated by students and faculty across DIPS campuses
+                  </p>
+                </div>
+              </div>
+
+              {currentUser && (
+                <button
+                  onClick={() => setShowRateModal(true)}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 flex items-center gap-1.5 transition-colors"
+                >
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-600" />
+                  <span>{userRating ? `Your Rating: ${userRating.rating}★ (Edit)` : 'Rate this Resource'}</span>
+                </button>
+              )}
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Summary Scorecard */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-lg bg-amber-50/40 border border-amber-100">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl font-extrabold text-slate-900">
+                    {resource.averageRating ? resource.averageRating.toFixed(1) : '0.0'}
+                  </div>
+                  <div>
+                    <StarRatingDisplay
+                      rating={resource.averageRating || 0}
+                      size="sm"
+                    />
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Based on {resource.ratingsCount || resource.ratings?.length || 0} verified rating(s)
+                    </span>
+                  </div>
+                </div>
+
+                {userRating && (
+                  <div className="text-xs bg-white px-3 py-2 rounded-lg border border-amber-200 text-amber-900 flex items-center gap-2">
+                    <span className="font-semibold">Your Review:</span>
+                    <StarRatingDisplay rating={userRating.rating} size="xs" />
+                    {userRating.feedback && (
+                      <span className="text-slate-600 italic truncate max-w-xs">
+                        "{userRating.feedback}"
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Individual Reviews List */}
+              {resource.ratings && resource.ratings.length > 0 ? (
+                <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Student & Teacher Feedback ({resource.ratings.length})
+                  </span>
+                  {resource.ratings.map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-3 rounded-lg bg-slate-50/70 border border-slate-100 text-xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800">{r.userName}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              r.userRole === 'student'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                            }`}
+                          >
+                            {r.userRole === 'student' ? 'Student' : 'Faculty'}
+                          </span>
+                          {r.userBranch && (
+                            <span className="text-[10px] text-slate-400">• {r.userBranch}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StarRatingDisplay rating={r.rating} size="xs" />
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(r.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      {r.feedback && (
+                        <p className="text-slate-700 leading-relaxed pl-1 pt-0.5">
+                          "{r.feedback}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-slate-400 text-xs">
+                  <p>No written feedback yet. Be the first to rate this educational material!</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer Actions */}
@@ -210,6 +372,16 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {currentUser && (
+              <button
+                onClick={() => setShowRateModal(true)}
+                className="px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors flex items-center gap-1.5"
+              >
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-600" />
+                <span>Rate & Review</span>
+              </button>
+            )}
+
             {onOpenVersions && (
               <button
                 onClick={() => onOpenVersions(resource)}
@@ -236,6 +408,21 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Rating Submission Modal */}
+        {currentUser && (
+          <RateResourceModal
+            resource={resource}
+            currentUser={currentUser}
+            isOpen={showRateModal}
+            onClose={() => setShowRateModal(false)}
+            onRatingSubmitted={(updated) => {
+              if (onResourceUpdated) {
+                onResourceUpdated(updated);
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );

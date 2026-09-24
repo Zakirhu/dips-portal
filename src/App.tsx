@@ -10,6 +10,7 @@ import { ResourcePreviewModal } from './components/ResourcePreviewModal.js';
 import { VersionHistoryModal } from './components/VersionHistoryModal.js';
 import { NewVersionModal } from './components/NewVersionModal.js';
 import { UploadResourceModal } from './components/UploadResourceModal.js';
+import { GlobalAnnouncementBanner } from './components/GlobalAnnouncementBanner.js';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -144,7 +145,12 @@ export default function App() {
         onQuickSwitchUser={handleQuickSwitchUser}
         activeTab={activeNavTab}
         setActiveTab={setActiveNavTab}
+        onPreviewResource={setPreviewResource}
+        onDownload={handleDownload}
       />
+
+      {/* Global School-Wide Announcement Banner */}
+      <GlobalAnnouncementBanner currentUser={currentUser} />
 
       {/* Main Role-Specific View */}
       <main className="flex-1">
@@ -184,6 +190,7 @@ export default function App() {
       {previewResource && (
         <ResourcePreviewModal
           resource={previewResource}
+          currentUser={currentUser}
           onClose={() => setPreviewResource(null)}
           onDownload={handleDownload}
           onOpenVersions={(res) => {
@@ -195,6 +202,9 @@ export default function App() {
           }
           onCollaborate={(res) => {
             setCollaborateResource(res);
+          }}
+          onResourceUpdated={(updatedRes) => {
+            setPreviewResource(updatedRes);
           }}
         />
       )}

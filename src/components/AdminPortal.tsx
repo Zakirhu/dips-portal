@@ -540,123 +540,138 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Toast Notification */}
       {notificationMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs flex items-center gap-2 animate-fade-in">
-          <CheckCircle className="w-4 h-4 text-emerald-400" />
-          <span>{notificationMsg}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs flex items-center gap-2.5 animate-in slide-in-from-bottom-5">
+          <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-medium">{notificationMsg}</span>
         </div>
       )}
 
-      {/* Admin Title & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
-        <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-2xl bg-white p-1 flex items-center justify-center shadow-xs border border-slate-200 shrink-0">
-            <img
-              src="/dips-logo.png"
-              alt="DIPS Institutions Logo"
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-                Super Admin Control
-              </span>
-              <span className="text-xs text-slate-500">Central Directorate Portal</span>
-              <span className="text-slate-300">•</span>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-2 py-0.5 text-xs font-semibold rounded-md border flex items-center gap-1.5 transition-all ${
-                  supabaseStatus?.connected
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                }`}
-                title="Click to view Supabase backend configuration in Settings"
-              >
-                <Database className="w-3 h-3 text-emerald-600" />
-                <span>Supabase: {supabaseStatus?.connected ? 'Connected' : 'Configured'}</span>
-              </button>
-            </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
-              DIPS Institutional Management & Content Governance
-            </h2>
-          </div>
-        </div>
+      {/* Admin Executive Header Card */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-7 text-white shadow-xl border border-slate-800">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-50" />
+        <div className="absolute -top-24 -right-24 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={loadAllData}
-            disabled={loading}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-          <button
-            onClick={() => {
-              setBranchForm({
-                name: '',
-                code: '',
-                city: '',
-                address: '',
-                phone: '',
-                principalName: '',
-                establishedYear: 2026,
-              });
-              setEditingBranch(null);
-              setShowBranchModal(true);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Branch
-          </button>
-          <button
-            onClick={() => {
-              setTeacherForm({
-                fullName: '',
-                employeeId: '',
-                email: '',
-                phone: '',
-                branchId: branches[0]?.id || '',
-                designation: 'PGT Teacher',
-                assignedSubjectIds: [subjects[0]?.id || ''],
-                assignedClassIds: [classes[0]?.id || ''],
-                initialPassword: 'teacher123',
-              });
-              setEditingTeacher(null);
-              setShowTeacherModal(true);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Teacher
-          </button>
-          <button
-            onClick={() => {
-              setStudentForm({
-                fullName: '',
-                admissionNo: `DIPS-2026-${Math.floor(100 + Math.random() * 900)}`,
-                email: '',
-                phone: '',
-                branchId: branches[0]?.id || '',
-                classId: classes[0]?.id || '',
-                section: 'A',
-                rollNo: '01',
-                initialPassword: 'student123',
-              });
-              setShowStudentModal(true);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Enroll Student
-          </button>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-lg shadow-black/40 border border-white/20 shrink-0">
+              <img
+                src="/dips-logo.png"
+                alt="DIPS Institutions Logo"
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-xs">
+                  Central Directorate
+                </span>
+                <span className="text-xs text-indigo-200 font-medium">Session 2026-27</span>
+                <span className="text-slate-500">•</span>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`px-2 py-0.5 text-[11px] font-semibold rounded-md border flex items-center gap-1.5 transition-all ${
+                    supabaseStatus?.connected
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                      : 'bg-white/10 text-slate-300 border-white/15 hover:bg-white/20'
+                  }`}
+                  title="Click to view Supabase backend configuration in Settings"
+                >
+                  <Database className="w-3 h-3 text-emerald-400" />
+                  <span>Supabase: {supabaseStatus?.connected ? 'Live & Connected' : 'Configured'}</span>
+                </button>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                DIPS Central Governance & Academic Directorate
+              </h2>
+              <p className="text-xs text-slate-300 font-normal">
+                Multi-branch curriculum synchronization, teacher access management, and resource quality control
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={loadAllData}
+              disabled={loading}
+              className="px-3 py-2 text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl transition-all flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Sync</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setBranchForm({
+                  name: '',
+                  code: '',
+                  city: '',
+                  address: '',
+                  phone: '',
+                  principalName: '',
+                  establishedYear: 2026,
+                });
+                setEditingBranch(null);
+                setShowBranchModal(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-white bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl transition-all flex items-center gap-1.5 backdrop-blur-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Add Branch</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setTeacherForm({
+                  fullName: '',
+                  employeeId: '',
+                  email: '',
+                  phone: '',
+                  branchId: branches[0]?.id || '',
+                  designation: 'PGT Teacher',
+                  assignedSubjectIds: [subjects[0]?.id || ''],
+                  assignedClassIds: [classes[0]?.id || ''],
+                  initialPassword: 'teacher123',
+                });
+                setEditingTeacher(null);
+                setShowTeacherModal(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-md shadow-indigo-950/50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Faculty</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setStudentForm({
+                  fullName: '',
+                  admissionNo: `DIPS-2026-${Math.floor(100 + Math.random() * 900)}`,
+                  email: '',
+                  phone: '',
+                  branchId: branches[0]?.id || '',
+                  classId: classes[0]?.id || '',
+                  section: 'A',
+                  rollNo: '01',
+                  initialPassword: 'student123',
+                });
+                setShowStudentModal(true);
+              }}
+              className="px-3.5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition-all shadow-md shadow-amber-950/50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Enroll Student</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Admin Navigation Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold border-b border-slate-200">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 text-xs font-bold scrollbar-none">
         {[
           { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
           { id: 'branches', label: `Branches (${branches.length})`, icon: Building2 },
@@ -679,13 +694,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                  : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border border-slate-200/80'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-indigo-600'}`} />
               <span>{tab.label}</span>
             </button>
           );
@@ -697,51 +712,76 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="space-y-6">
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-xs font-medium text-slate-500 block">Total DIPS Branches</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-black text-slate-900">{stats.totalBranches}</span>
-                <Building2 className="w-5 h-5 text-indigo-500" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Branches</span>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Building2 className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">Begowal, Jalandhar, etc.</span>
+              <div className="mt-3">
+                <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalBranches}</span>
+                <span className="text-[11px] text-slate-500 block mt-1 font-medium">All 5 campuses online</span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-xs font-medium text-slate-500 block">Faculty & Teachers</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-black text-slate-900">{stats.totalTeachers}</span>
-                <Users className="w-5 h-5 text-indigo-500" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-600" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Faculty</span>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-[11px] text-emerald-600 mt-1 block">Cross-branch sharing active</span>
+              <div className="mt-3">
+                <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalTeachers}</span>
+                <span className="text-[11px] text-emerald-600 block mt-1 font-medium">Cross-branch active</span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-xs font-medium text-slate-500 block">Enrolled Students</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-black text-slate-900">{stats.totalStudents}</span>
-                <GraduationCap className="w-5 h-5 text-emerald-500" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Students</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">Class VI to XII</span>
+              <div className="mt-3">
+                <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalStudents}</span>
+                <span className="text-[11px] text-slate-500 block mt-1 font-medium">Classes VI to XII</span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-xs font-medium text-slate-500 block">Shared Resources</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-black text-slate-900">{stats.totalResources}</span>
-                <BookOpen className="w-5 h-5 text-amber-500" />
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Resources</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-4 h-4" />
+                </div>
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">Multi-version verified</span>
+              <div className="mt-3">
+                <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalResources}</span>
+                <span className="text-[11px] text-slate-500 block mt-1 font-medium">Multi-version verified</span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-xs font-medium text-slate-500 block">Storage Usage</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-black text-slate-900">
-                  {(stats.storageUsageBytes / (1024 * 1024)).toFixed(1)} MB
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Storage</span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <HardDrive className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-black text-slate-900 tracking-tight">
+                  {(stats.storageUsageBytes / (1024 * 1024)).toFixed(1)} <span className="text-sm font-semibold text-slate-500">MB</span>
                 </span>
-                <HardDrive className="w-5 h-5 text-blue-500" />
+                <span className="text-[11px] text-slate-500 block mt-1 font-medium">Cloud file repository</span>
               </div>
-              <span className="text-[11px] text-slate-400 mt-1 block">Cloud file repository</span>
             </div>
           </div>
 
@@ -947,33 +987,50 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       {/* 3. FACULTY & TEACHERS */}
       {activeTab === 'teachers' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Faculty & Subject Teachers</h3>
-              <p className="text-xs text-slate-500">
-                Manage accounts, assigned subjects, and cross-branch sharing permissions
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-900">Faculty & Subject Teachers</h3>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Permanently Stored in Cloud
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Manage accounts, assigned subjects, and login credentials stored permanently across sessions
               </p>
             </div>
-            <button
-              onClick={() => {
-                setTeacherForm({
-                  fullName: '',
-                  employeeId: '',
-                  email: '',
-                  phone: '',
-                  branchId: branches[0]?.id || '',
-                  designation: 'TGT Teacher',
-                  assignedSubjectIds: [subjects[0]?.id || ''],
-                  assignedClassIds: [classes[0]?.id || ''],
-                  initialPassword: 'teacher123',
-                });
-                setEditingTeacher(null);
-                setShowTeacherModal(true);
-              }}
-              className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" /> Register Teacher
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSyncSupabase}
+                disabled={syncingSupabase}
+                className="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1.5 transition-colors"
+                title="Force push all teacher logins to Supabase"
+              >
+                <Database className={`w-3.5 h-3.5 ${syncingSupabase ? 'animate-bounce' : ''}`} />
+                {syncingSupabase ? 'Saving...' : 'Save to Supabase'}
+              </button>
+              <button
+                onClick={() => {
+                  setTeacherForm({
+                    fullName: '',
+                    employeeId: '',
+                    email: '',
+                    phone: '',
+                    branchId: branches[0]?.id || '',
+                    designation: 'TGT Teacher',
+                    assignedSubjectIds: [subjects[0]?.id || ''],
+                    assignedClassIds: [classes[0]?.id || ''],
+                    initialPassword: 'teacher123',
+                  });
+                  setEditingTeacher(null);
+                  setShowTeacherModal(true);
+                }}
+                className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" /> Register Teacher
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">

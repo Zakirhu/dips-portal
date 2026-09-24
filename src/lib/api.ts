@@ -5,6 +5,7 @@ import type {
   Subject,
   AcademicSession,
   Resource,
+  ResourceRating,
   Announcement,
   AppNotification,
   ActivityLog,
@@ -197,6 +198,25 @@ export const api = {
     request<{ success: boolean; downloadsCount: number; fileUrl: string }>(`/api/resources/${id}/download`, {
       method: 'POST',
     }),
+
+  rateResource: (id: string, data: { rating: number; feedback?: string }) =>
+    request<{
+      success: boolean;
+      resource: Resource;
+      rating: ResourceRating;
+      averageRating: number;
+      ratingsCount: number;
+    }>(`/api/resources/${id}/rate`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getResourceRatings: (id: string) =>
+    request<{
+      ratings: ResourceRating[];
+      averageRating: number;
+      ratingsCount: number;
+    }>(`/api/resources/${id}/ratings`),
 
   deleteResource: (id: string) =>
     request<{ success: boolean }>(`/api/resources/${id}`, { method: 'DELETE' }),

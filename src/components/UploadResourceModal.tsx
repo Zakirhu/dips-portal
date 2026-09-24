@@ -295,7 +295,7 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
                 <span className="text-[11px] text-slate-400 mt-1">
                   {file
                     ? `${(file.size / (1024 * 1024)).toFixed(2)} MB • ${file.type || 'file'}`
-                    : 'PDF, DOCX, PPTX, XLSX, MP4, MP3, Images up to 50MB'}
+                    : 'PDF, DOCX, PPTX, XLSX, MP4, MP3, Images up to 50MB (Permanently saved in Supabase Cloud Storage)'}
                 </span>
               </label>
             </div>
