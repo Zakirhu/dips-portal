@@ -270,31 +270,6 @@ const defaultBranches: Branch[] = [
     totalStudents: 0,
     totalTeachers: 0,
   },
-  {
-    id: 'branch-dasuya',
-    name: 'DIPS School, Dasuya (Hoshiarpur)',
-    code: 'DAS',
-    city: 'Dasuya, Hoshiarpur',
-    address: 'Jalandhar-Pathankot Highway, Dasuya, Punjab',
-    phone: '+91 1883 286200',
-    principalName: 'Mrs. Anita Sharma',
-    establishedYear: 2007,
-    totalStudents: 0,
-    totalTeachers: 0,
-  },
-  {
-    id: 'branch-khemkaran',
-    name: 'DIPS School, Khemkaran (Tarn Taran)',
-    code: 'KHM',
-    city: 'Khemkaran, Tarn Taran',
-    address: 'Border Road, Khemkaran, Punjab',
-    phone: '+91 1850 252100',
-    principalName: 'Mrs. Paramjit Kaur',
-    establishedYear: 2015,
-    totalStudents: 0,
-    totalTeachers: 0,
-  },
-
 ];
 
 const defaultClasses: AcademicClass[] = [

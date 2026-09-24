@@ -192,7 +192,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white font-sans antialiased relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white font-sans antialiased relative overflow-x-hidden">
       {/* Dynamic Background Glowing Meshes */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-amber-500/15 rounded-full blur-[160px] pointer-events-none" />
@@ -206,8 +206,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           ========================================================= */}
       <header className="relative z-20 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-13 h-13 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xl shadow-indigo-950/60 border border-white/30 shrink-0 transform transition-transform hover:scale-105">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xl shadow-indigo-950/60 border border-white/30 shrink-0 transform transition-transform hover:scale-105">
               <img
                 src="/dips-logo.png"
                 alt="DIPS Institutions Logo"
@@ -215,16 +215,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                <h1 className="text-base sm:text-2xl font-black tracking-tight text-white truncate flex items-center gap-2">
                   DIPS INSTITUTIONS
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-black tracking-widest px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-xs">
                   <Sparkles className="w-2.5 h-2.5" /> Central Portal
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium tracking-wide">
+              <p className="text-[10px] sm:text-xs text-slate-400 font-medium tracking-wide truncate">
                 Centralized Academic Directorate & Resource Network
               </p>
             </div>
@@ -233,7 +233,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <div className="hidden lg:flex items-center gap-6 text-xs text-slate-300">
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
               <Building className="w-4 h-4 text-indigo-400" />
-              <span className="font-semibold">{branches.length || 21} Connected Campuses & Institutions</span>
+              <span className="font-semibold">{branches.length || 19} Connected Campuses & Institutions</span>
             </div>
             <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
               <School className="w-4 h-4 text-amber-400" />
@@ -248,24 +248,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           ========================================================= */}
       <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col lg:flex-row items-center justify-between gap-12">
         {/* LEFT COLUMN: INSTITUTIONAL SHOWCASE & VALUE PROPOSITION */}
-        <div className="flex-1 space-y-8 text-left max-w-2xl">
+        <div className="w-full lg:flex-1 space-y-8 text-left max-w-2xl min-w-0">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/25 text-indigo-300 text-[11px] sm:text-xs font-semibold backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>Unified Cross-Branch Academic Excellence</span>
+              <span>✨ Unified Academic Excellence</span>
             </div>
 
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-snug sm:leading-tight">
-              One Unified Hub for{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-amber-300 to-indigo-200">
-                Curriculum, Lesson Plans & Resources
-              </span>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-snug sm:leading-tight break-words">
+              <span className="text-[#F8FAFF]">One Network.</span>{' '}
+              <span className="text-[#4F6BFF]">One Standard.</span>{' '}
+              <span className="text-[#F5B82E]">One DIPS.</span>
             </h2>
 
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-              Connect faculty, students, and academic coordinators across all 19 DIPS colleges and CBSE senior secondary schools. 
-              Share syllabus notes, collaborate on question papers, track revision logs, and download verified educational materials.
-            </p>
+            <div className="space-y-2">
+              <h3 className="text-base sm:text-lg font-bold text-[#F8FAFF] tracking-wide">
+                Empowering Every Campus with One Unified Academic Platform
+              </h3>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+                Connect teachers, students, and academic leaders across DIPS Institutions through one centralized ecosystem for curriculum, lesson plans, learning resources, assessments, and collaboration.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                const el = document.getElementById('campus-explorer');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Building className="w-4 h-4" />
+              <span>Explore the Network</span>
+            </button>
+            <button
+              onClick={() => {
+                setSelectedRole('teacher');
+                setIsRegisterMode(false);
+                const el = document.getElementById('login-card');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-200 hover:text-white font-bold text-xs sm:text-sm border border-slate-700 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-indigo-400" />
+              <span>Faculty Login</span>
+            </button>
           </div>
 
           {/* Connected Campuses Badges - Professional Institutional Showcase */}
@@ -290,8 +319,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               { id: 'branch-mehta-chowk', name: 'DIPS School, Mehta Chowk (Amritsar)', code: 'MHT-ASR', city: 'Mehta Chowk, Amritsar', type: 'school' },
               { id: 'branch-rayya', name: 'DIPS School, Rayya (Amritsar)', code: 'RAY', city: 'Rayya, Amritsar', type: 'school' },
               { id: 'branch-tanda', name: 'DIPS School, Tanda (Hoshiarpur)', code: 'TAN', city: 'Tanda, Hoshiarpur', type: 'school' },
-              { id: 'branch-dasuya', name: 'DIPS School, Dasuya (Hoshiarpur)', code: 'DAS', city: 'Dasuya, Hoshiarpur', type: 'school' },
-              { id: 'branch-khemkaran', name: 'DIPS School, Khemkaran (Tarn Taran)', code: 'KHM', city: 'Khemkaran, Tarn Taran', type: 'school' },
             ];
 
             const activeBranches = (branches.length > 0 ? branches : fallbackList)
@@ -375,7 +402,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             });
 
             return (
-              <div className="rounded-2xl bg-slate-900/80 border border-slate-800/90 backdrop-blur-md p-4 space-y-3.5 shadow-xl shadow-slate-950/40">
+              <div id="campus-explorer" className="rounded-2xl bg-slate-900/80 border border-slate-800/90 backdrop-blur-md p-4 space-y-3.5 shadow-xl shadow-slate-950/40">
                 {/* Header & Controls */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-800">
                   <div className="flex items-center gap-2">
@@ -554,7 +581,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
         {/* RIGHT COLUMN: INTERACTIVE SIGN IN & REGISTRATION PORTAL CARD */}
         <div className="w-full max-w-md lg:max-w-lg shrink-0">
-          <div className="relative bg-slate-900/95 backdrop-blur-xl text-white rounded-3xl shadow-2xl shadow-slate-950/90 border border-slate-700/80 overflow-hidden">
+          <div id="login-card" className="relative bg-slate-900/95 backdrop-blur-xl text-white rounded-3xl shadow-2xl shadow-slate-950/90 border border-slate-700/80 overflow-hidden">
             {/* Top Accent Gradient Bar */}
             <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 via-amber-400 to-indigo-500" />
 

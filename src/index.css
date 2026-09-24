@@ -1,5 +1,61 @@
 @import "tailwindcss";
 
+:root {
+  --bg-app: #05091A;
+  --primary-blue: #4F6BFF;
+  --dips-gold: #F5B82E;
+  --main-white: #F8FAFF;
+  --secondary-text: #AAB4D0;
+  --card-bg: #0D1428;
+  --custom-border: #263354;
+}
+
+body {
+  background-color: var(--bg-app) !important;
+  color: var(--main-white) !important;
+}
+
+/* Global color overrides for exact brand palette */
+.bg-slate-950, .bg-slate-900 {
+  background-color: var(--card-bg) !important;
+}
+
+.border-slate-800, .border-slate-700, .border-white\/10 {
+  border-color: var(--custom-border) !important;
+}
+
+.text-slate-100, .text-white {
+  color: var(--main-white) !important;
+}
+
+.text-slate-400, .text-slate-300, .text-slate-200, .text-slate-500 {
+  color: var(--secondary-text) !important;
+}
+
+.bg-indigo-600, .bg-indigo-500 {
+  background-color: var(--primary-blue) !important;
+}
+
+.text-indigo-400, .text-indigo-300 {
+  color: var(--primary-blue) !important;
+}
+
+.border-indigo-500, .border-indigo-400 {
+  border-color: var(--primary-blue) !important;
+}
+
+.bg-amber-400, .bg-amber-500 {
+  background-color: var(--dips-gold) !important;
+}
+
+.text-amber-400, .text-amber-300 {
+  color: var(--dips-gold) !important;
+}
+
+.border-amber-400, .border-amber-500 {
+  border-color: var(--dips-gold) !important;
+}
+
 /* =========================================================
    MOBILE RESPONSIVENESS & ANTI-OVERFLOW RULES
    ========================================================= */
@@ -96,3 +152,4 @@ iframe {
     margin: 0.5rem auto !important;
   }
 }
+
