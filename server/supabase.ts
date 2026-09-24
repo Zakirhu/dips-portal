@@ -317,6 +317,11 @@ export async function syncResourceToSupabase(resource: any) {
       download_count: resource.downloadsCount || resource.downloadCount || 0,
       chapter: resource.chapter || '',
       topic: resource.topic || '',
+      current_version: resource.currentVersion || 1,
+      versions: resource.versions || [],
+      ratings: resource.ratings || [],
+      average_rating: resource.averageRating || 0,
+      rating_count: resource.ratingsCount || 0,
     });
     if (error) {
       console.warn(`[Supabase Sync] Resource sync notice: ${error.message}`);
@@ -437,3 +442,182 @@ export async function syncActivityLogToSupabase(log: any) {
     return { success: false, error: err?.message };
   }
 }
+
+/**
+ * Syncs a branch record immediately to Supabase
+ */
+export async function syncBranchToSupabase(branch: any) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('branches').upsert({
+      id: branch.id,
+      name: branch.name,
+      code: branch.code,
+      city: branch.city,
+      address: branch.address || '',
+      phone: branch.phone || '',
+      principal_name: branch.principalName || '',
+      established_year: branch.establishedYear || null,
+      total_students: branch.totalStudents || 0,
+      total_teachers: branch.totalTeachers || 0,
+    });
+    if (error) {
+      console.warn(`[Supabase Sync] Branch sync notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes a branch record from Supabase
+ */
+export async function deleteBranchFromSupabase(branchId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('branches').delete().eq('id', branchId);
+    if (error) {
+      console.warn(`[Supabase Sync] Branch deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes a resource from Supabase
+ */
+export async function deleteResourceFromSupabase(resourceId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('resources').delete().eq('id', resourceId);
+    if (error) {
+      console.warn(`[Supabase Sync] Resource deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes an announcement from Supabase
+ */
+export async function deleteAnnouncementFromSupabase(announcementId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('announcements').delete().eq('id', announcementId);
+    if (error) {
+      console.warn(`[Supabase Sync] Announcement deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes a user from Supabase
+ */
+export async function deleteUserFromSupabase(userId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('users').delete().eq('id', userId);
+    if (error) {
+      console.warn(`[Supabase Sync] User deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Syncs an academic class to Supabase
+ */
+export async function syncClassToSupabase(cls: any) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('classes').upsert({
+      id: cls.id,
+      name: cls.name,
+      code: cls.code,
+      sort_order: cls.sortOrder || 1,
+      sections: cls.sections || ['A', 'B'],
+    });
+    if (error) {
+      console.warn(`[Supabase Sync] Class sync notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes an academic class from Supabase
+ */
+export async function deleteClassFromSupabase(classId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('classes').delete().eq('id', classId);
+    if (error) {
+      console.warn(`[Supabase Sync] Class deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Syncs an academic subject to Supabase
+ */
+export async function syncSubjectToSupabase(subj: any) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('subjects').upsert({
+      id: subj.id,
+      name: subj.name,
+      code: subj.code,
+      department: subj.department || '',
+      applicable_classes: subj.applicableClasses || [],
+      description: subj.description || '',
+    });
+    if (error) {
+      console.warn(`[Supabase Sync] Subject sync notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Deletes an academic subject from Supabase
+ */
+export async function deleteSubjectFromSupabase(subjectId: string) {
+  try {
+    const client = getSupabaseClient();
+    const { error } = await client.from('subjects').delete().eq('id', subjectId);
+    if (error) {
+      console.warn(`[Supabase Sync] Subject deletion notice: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+

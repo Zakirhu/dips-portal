@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { authMiddleware, requireAdmin, AuthenticatedRequest } from '../auth.js';
+import { syncBranchToSupabase, deleteBranchFromSupabase } from '../supabase.js';
 import type { Branch } from '../../src/types.js';
 
 export const branchRouter = Router();
@@ -24,7 +25,7 @@ branchRouter.get('/', (req, res) => {
   res.json({ branches: enriched });
 });
 
-branchRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+branchRouter.post('/', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { name, code, city, address, phone, principalName, establishedYear } = req.body;
   if (!name || !code || !city) {
     return res.status(400).json({ error: 'Branch name, code, and city are required.' });
@@ -44,6 +45,14 @@ branchRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRequest,
   };
 
   db.addBranch(newBranch);
+
+  // Sync real-time to Supabase
+  try {
+    await syncBranchToSupabase(newBranch);
+  } catch (syncErr) {
+    console.warn('[Supabase] Branch creation sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
@@ -56,10 +65,17 @@ branchRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRequest,
   return res.status(201).json({ branch: newBranch });
 });
 
-branchRouter.put('/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+branchRouter.put('/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const updated = db.updateBranch(id, req.body);
   if (!updated) return res.status(404).json({ error: 'Branch not found' });
+
+  // Sync update immediately to Supabase
+  try {
+    await syncBranchToSupabase(updated);
+  } catch (syncErr) {
+    console.warn('[Supabase] Branch update sync notice:', syncErr);
+  }
 
   db.logActivity({
     userId: req.user!.id,
@@ -73,12 +89,20 @@ branchRouter.put('/:id', authMiddleware, requireAdmin, (req: AuthenticatedReques
   return res.json({ branch: updated });
 });
 
-branchRouter.delete('/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+branchRouter.delete('/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const branch = db.getBranches().find((b) => b.id === id);
   if (!branch) return res.status(404).json({ error: 'Branch not found' });
 
   db.deleteBranch(id);
+
+  // Sync deletion immediately to Supabase
+  try {
+    await deleteBranchFromSupabase(id);
+  } catch (syncErr) {
+    console.warn('[Supabase] Branch delete sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
@@ -90,3 +114,4 @@ branchRouter.delete('/:id', authMiddleware, requireAdmin, (req: AuthenticatedReq
 
   return res.json({ success: true, message: 'Branch removed successfully.' });
 });
+

@@ -10,7 +10,11 @@ import {
   canEditResource,
   AuthenticatedRequest,
 } from '../auth.js';
-import { uploadFileToSupabaseStorage, syncResourceToSupabase } from '../supabase.js';
+import {
+  uploadFileToSupabaseStorage,
+  syncResourceToSupabase,
+  deleteResourceFromSupabase,
+} from '../supabase.js';
 import type { Resource, ResourceVersion, ContentCategory, ContentType, ResourceStatus } from '../../src/types.js';
 
 export const resourceRouter = Router();
@@ -453,7 +457,7 @@ resourceRouter.post(
 );
 
 // POST /api/resources/:id/restore-version - Admin or authorized teacher can restore older version
-resourceRouter.post('/:id/restore-version', authMiddleware, requireTeacherOrAdmin, (req: AuthenticatedRequest, res) => {
+resourceRouter.post('/:id/restore-version', authMiddleware, requireTeacherOrAdmin, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const resource = db.findResourceById(req.params.id);
   if (!resource) return res.status(404).json({ error: 'Resource not found' });
@@ -477,6 +481,13 @@ resourceRouter.post('/:id/restore-version', authMiddleware, requireTeacherOrAdmi
 
   db.persist();
 
+  // Sync update to Supabase
+  try {
+    await syncResourceToSupabase(resource);
+  } catch (syncErr) {
+    console.warn('[Supabase] Resource restore version sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: user.id,
     userName: user.fullName,
@@ -492,7 +503,7 @@ resourceRouter.post('/:id/restore-version', authMiddleware, requireTeacherOrAdmi
 });
 
 // POST /api/resources/:id/status - Approve or Reject (Admin or Subject Head)
-resourceRouter.post('/:id/status', authMiddleware, (req: AuthenticatedRequest, res) => {
+resourceRouter.post('/:id/status', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   if (user.role !== 'admin' && user.role !== 'coordinator') {
     return res.status(403).json({ error: 'Only Administrators or Academic Coordinators can approve/reject content.' });
@@ -510,6 +521,13 @@ resourceRouter.post('/:id/status', authMiddleware, (req: AuthenticatedRequest, r
   resource.approvalRemarks = remarks || '';
   resource.updatedAt = new Date().toISOString();
   db.persist();
+
+  // Sync update to Supabase
+  try {
+    await syncResourceToSupabase(resource);
+  } catch (syncErr) {
+    console.warn('[Supabase] Resource status sync notice:', syncErr);
+  }
 
   db.logActivity({
     userId: user.id,
@@ -560,7 +578,7 @@ resourceRouter.post('/:id/download', authMiddleware, (req: AuthenticatedRequest,
 });
 
 // DELETE /api/resources/:id
-resourceRouter.delete('/:id', authMiddleware, requireTeacherOrAdmin, (req: AuthenticatedRequest, res) => {
+resourceRouter.delete('/:id', authMiddleware, requireTeacherOrAdmin, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const resource = db.findResourceById(req.params.id);
   if (!resource) return res.status(404).json({ error: 'Resource not found' });
@@ -571,6 +589,14 @@ resourceRouter.delete('/:id', authMiddleware, requireTeacherOrAdmin, (req: Authe
   }
 
   db.deleteResource(resource.id);
+
+  // Sync deletion to Supabase
+  try {
+    await deleteResourceFromSupabase(resource.id);
+  } catch (syncErr) {
+    console.warn('[Supabase] Resource delete sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: user.id,
     userName: user.fullName,
@@ -586,7 +612,7 @@ resourceRouter.delete('/:id', authMiddleware, requireTeacherOrAdmin, (req: Authe
 });
 
 // POST /api/resources/:id/rate - Star-based rating & qualitative review
-resourceRouter.post('/:id/rate', authMiddleware, (req: AuthenticatedRequest, res) => {
+resourceRouter.post('/:id/rate', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const resource = db.findResourceById(req.params.id);
   if (!resource) return res.status(404).json({ error: 'Resource not found' });
@@ -615,6 +641,13 @@ resourceRouter.post('/:id/rate', authMiddleware, (req: AuthenticatedRequest, res
 
   if (!result) {
     return res.status(500).json({ error: 'Failed to record rating.' });
+  }
+
+  // Sync updated rating and average to Supabase
+  try {
+    await syncResourceToSupabase(result.resource);
+  } catch (syncErr) {
+    console.warn('[Supabase] Resource rating sync notice:', syncErr);
   }
 
   // Activity log for auditing

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { db } from '../db.js';
 import { authMiddleware, requireAdmin, AuthenticatedRequest } from '../auth.js';
-import { syncUserToSupabase } from '../supabase.js';
+import { syncUserToSupabase, deleteUserFromSupabase } from '../supabase.js';
 import type { User } from '../../src/types.js';
 
 export const userRouter = Router();
@@ -147,12 +147,20 @@ userRouter.put('/teachers/:id', authMiddleware, requireAdmin, async (req: Authen
 });
 
 // Delete Teacher
-userRouter.delete('/teachers/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.delete('/teachers/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const teacher = db.findUserById(id);
   if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
 
   db.deleteUser(id);
+
+  // Sync deletion to Supabase
+  try {
+    await deleteUserFromSupabase(id);
+  } catch (syncErr) {
+    console.warn('[Supabase] Teacher delete sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
@@ -175,7 +183,7 @@ userRouter.get('/students', authMiddleware, (req: AuthenticatedRequest, res) => 
 });
 
 // Add Student
-userRouter.post('/students', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.post('/students', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const {
     fullName,
     admissionNo,
@@ -223,6 +231,14 @@ userRouter.post('/students', authMiddleware, requireAdmin, (req: AuthenticatedRe
   };
 
   db.addUser(newStudent);
+
+  // Sync Student to Supabase for permanent storage
+  try {
+    await syncUserToSupabase(newStudent, passwordHash);
+  } catch (syncErr) {
+    console.warn('[Supabase] Student sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
@@ -237,7 +253,7 @@ userRouter.post('/students', authMiddleware, requireAdmin, (req: AuthenticatedRe
 });
 
 // Edit Student
-userRouter.put('/students/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.put('/students/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const student = db.findUserById(id);
   if (!student || student.role !== 'student') {
@@ -284,17 +300,34 @@ userRouter.put('/students/:id', authMiddleware, requireAdmin, (req: Authenticate
     isActive: typeof isActive === 'boolean' ? isActive : student.isActive,
   });
 
+  // Sync update to Supabase
+  try {
+    if (updated) {
+      await syncUserToSupabase(updated, updated.passwordHash);
+    }
+  } catch (syncErr) {
+    console.warn('[Supabase] Student update sync notice:', syncErr);
+  }
+
   const { passwordHash: _, ...safe } = updated!;
   return res.json({ student: safe });
 });
 
 // Delete Student
-userRouter.delete('/students/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+userRouter.delete('/students/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const student = db.findUserById(id);
   if (!student) return res.status(404).json({ error: 'Student not found' });
 
   db.deleteUser(id);
+
+  // Sync deletion to Supabase
+  try {
+    await deleteUserFromSupabase(id);
+  } catch (syncErr) {
+    console.warn('[Supabase] Student delete sync notice:', syncErr);
+  }
+
   return res.json({ success: true });
 });
 

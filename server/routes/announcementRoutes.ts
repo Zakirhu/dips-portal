@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { authMiddleware, requireAdmin, AuthenticatedRequest } from '../auth.js';
+import { syncAnnouncementToSupabase, deleteAnnouncementFromSupabase } from '../supabase.js';
 import type { Announcement } from '../../src/types.js';
 
 export const announcementRouter = Router();
@@ -30,7 +31,7 @@ announcementRouter.get('/', authMiddleware, (req: AuthenticatedRequest, res) => 
 });
 
 // Create announcement
-announcementRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+announcementRouter.post('/', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const { title, content, priority, targetBranchId, targetRole, targetClassId } = req.body;
   if (!title || !content) {
@@ -52,6 +53,13 @@ announcementRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRe
 
   db.addAnnouncement(newAnnouncement);
 
+  // Sync announcement to Supabase
+  try {
+    await syncAnnouncementToSupabase(newAnnouncement);
+  } catch (syncErr) {
+    console.warn('[Supabase] Announcement sync notice:', syncErr);
+  }
+
   db.logActivity({
     userId: user.id,
     userName: user.fullName,
@@ -65,7 +73,16 @@ announcementRouter.post('/', authMiddleware, requireAdmin, (req: AuthenticatedRe
 });
 
 // Delete announcement
-announcementRouter.delete('/:id', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
-  db.deleteAnnouncement(req.params.id);
+announcementRouter.delete('/:id', authMiddleware, requireAdmin, async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params;
+  db.deleteAnnouncement(id);
+
+  // Sync deletion to Supabase
+  try {
+    await deleteAnnouncementFromSupabase(id);
+  } catch (syncErr) {
+    console.warn('[Supabase] Announcement delete sync notice:', syncErr);
+  }
+
   return res.json({ success: true });
 });
