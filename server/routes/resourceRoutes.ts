@@ -696,3 +696,83 @@ resourceRouter.get('/:id/ratings', authMiddleware, (req: AuthenticatedRequest, r
     ratingsCount: resource.ratingsCount || 0,
   });
 });
+
+// POST /api/resources/:id/comments - Post a discussion comment
+resourceRouter.post('/:id/comments', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  const resource = db.findResourceById(req.params.id);
+  if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+  const { content } = req.body;
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({ error: 'Comment content cannot be empty.' });
+  }
+
+  const result = db.addComment(resource.id, {
+    userId: user.id,
+    userName: user.fullName,
+    userRole: user.role,
+    userBranch: user.branchName || '',
+    content: content.trim(),
+  });
+
+  if (!result) {
+    return res.status(500).json({ error: 'Failed to post comment.' });
+  }
+
+  try {
+    await syncResourceToSupabase(result.resource);
+  } catch (syncErr) {
+    console.warn('[Supabase] Resource comment sync notice:', syncErr);
+  }
+
+  if (resource.uploadedByUserId !== user.id) {
+    db.addNotification({
+      id: 'notif-com-' + Date.now(),
+      userId: resource.uploadedByUserId,
+      title: `New Discussion Comment on "${resource.title}"`,
+      message: `${user.fullName} (${user.role === 'student' ? 'Student' : 'Faculty'}): "${content.trim().substring(0, 60)}..."`,
+      type: 'rating',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  res.json({
+    success: true,
+    resource: result.resource,
+    comment: result.comment,
+  });
+});
+
+// DELETE /api/resources/:id - Delete a resource (uploader or admin)
+resourceRouter.delete('/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  const resource = db.findResourceById(req.params.id);
+  if (!resource) return res.status(404).json({ error: 'Resource not found' });
+
+  if (user.role !== 'admin' && resource.uploadedByUserId !== user.id) {
+    return res.status(403).json({ error: 'You are not authorized to delete this resource.' });
+  }
+
+  db.deleteResource(resource.id);
+
+  try {
+    await deleteResourceFromSupabase(resource.id);
+  } catch (err) {
+    console.warn('[Supabase] Resource deletion warning:', err);
+  }
+
+  db.logActivity({
+    userId: user.id,
+    userName: user.fullName,
+    userRole: user.role,
+    branchName: user.branchName || 'DIPS Branch',
+    action: 'DELETE',
+    details: `Deleted educational resource: "${resource.title}" (${resource.subjectName}).`,
+  });
+
+  res.json({ success: true, message: 'Resource deleted successfully.' });
+});
+
+

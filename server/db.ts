@@ -3,12 +3,14 @@ import path from 'path';
 import crypto from 'crypto';
 import type {
   User,
+  UserRole,
   Branch,
   AcademicClass,
   Subject,
   AcademicSession,
   Resource,
   ResourceRating,
+  ResourceComment,
   Announcement,
   AppNotification,
   ActivityLog,
@@ -268,6 +270,31 @@ const defaultBranches: Branch[] = [
     totalStudents: 0,
     totalTeachers: 0,
   },
+  {
+    id: 'branch-dasuya',
+    name: 'DIPS School, Dasuya (Hoshiarpur)',
+    code: 'DAS',
+    city: 'Dasuya, Hoshiarpur',
+    address: 'Jalandhar-Pathankot Highway, Dasuya, Punjab',
+    phone: '+91 1883 286200',
+    principalName: 'Mrs. Anita Sharma',
+    establishedYear: 2007,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+  {
+    id: 'branch-khemkaran',
+    name: 'DIPS School, Khemkaran (Tarn Taran)',
+    code: 'KHM',
+    city: 'Khemkaran, Tarn Taran',
+    address: 'Border Road, Khemkaran, Punjab',
+    phone: '+91 1850 252100',
+    principalName: 'Mrs. Paramjit Kaur',
+    establishedYear: 2015,
+    totalStudents: 0,
+    totalTeachers: 0,
+  },
+
 ];
 
 const defaultClasses: AcademicClass[] = [
@@ -653,7 +680,7 @@ const defaultAnnouncements: Announcement[] = [
   {
     id: 'anc-01',
     title: 'DIPS Mid-Term Academic Assessments (2026-27) Schedule & Question Blueprint Released',
-    content: 'All faculty members and students across all 20 DIPS institutions and campuses are requested to download the finalized Mid-Term examination schedule and chapter-wise weightage blueprint. Teachers must ensure all revision materials and practice worksheets are uploaded by Friday.',
+    content: 'All faculty members and students across all 21 DIPS institutions and campuses are requested to download the finalized Mid-Term examination schedule and chapter-wise weightage blueprint. Teachers must ensure all revision materials and practice worksheets are uploaded by Friday.',
     priority: 'urgent',
     targetRole: 'all',
     authorName: 'Academic Directorate',
@@ -683,7 +710,7 @@ const defaultAnnouncements: Announcement[] = [
   {
     id: 'anc-04',
     title: 'Central Digital Repository Upgrade: NCERT Exemplars & Audio-Visual Modules Active',
-    content: 'The DIPS portal cloud storage has been expanded across all 20 campuses. High-resolution PDFs, laboratory manual guides, and solved sample papers are now accessible directly from any campus or mobile device.',
+    content: 'The DIPS portal cloud storage has been expanded across all 21 campuses. High-resolution PDFs, laboratory manual guides, and solved sample papers are now accessible directly from any campus or mobile device.',
     priority: 'low',
     targetRole: 'all',
     authorName: 'IT Directorate',
@@ -727,37 +754,21 @@ class Database {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
 
-        // Remove Kartarpur, College of Education, Dasuya if present in saved database
+        // Ensure parsed.branches precisely matches defaultBranches (19 official branches)
+        const defaultMap = new Map(defaultBranches.map(b => [b.id, b]));
+        const keptBranches: Branch[] = [];
         if (parsed.branches) {
-          parsed.branches = parsed.branches.filter(
-            (b: Branch) =>
-              b.id !== 'branch-kartarpur' &&
-              !b.name.toLowerCase().includes('kartarpur') &&
-              b.id !== 'branch-edu-tanda' &&
-              !b.name.toLowerCase().includes('college of education') &&
-              b.id !== 'branch-dasuya' &&
-              !b.name.toLowerCase().includes('dasuya')
-          );
-        }
-
-        // Ensure all default branches are synced in
-        if (!parsed.branches || parsed.branches.length < defaultBranches.length) {
-          const existingIds = new Set((parsed.branches || []).map((b: Branch) => b.id));
-          const existingNames = new Set((parsed.branches || []).map((b: Branch) => b.name.toLowerCase()));
-          parsed.branches = parsed.branches || [];
-
-          for (const defBranch of defaultBranches) {
-            if (!existingIds.has(defBranch.id) && !existingNames.has(defBranch.name.toLowerCase())) {
-              parsed.branches.push(defBranch);
-            } else {
-              // Update branch details
-              const idx = parsed.branches.findIndex((b: Branch) => b.id === defBranch.id || b.name.toLowerCase() === defBranch.name.toLowerCase());
-              if (idx !== -1) {
-                parsed.branches[idx] = { ...parsed.branches[idx], ...defBranch };
-              }
+          for (const b of parsed.branches) {
+            if (defaultMap.has(b.id)) {
+              keptBranches.push({ ...b, ...defaultMap.get(b.id) });
+              defaultMap.delete(b.id);
             }
           }
         }
+        for (const [_, defB] of defaultMap) {
+          keptBranches.push(defB);
+        }
+        parsed.branches = keptBranches;
 
         if (!parsed.resources || parsed.resources.length === 0) {
           parsed.resources = defaultResources;
@@ -1113,6 +1124,39 @@ class Database {
 
     this.persist();
     return { resource, rating: ratingObj };
+  }
+
+  public addComment(
+    resourceId: string,
+    commentData: {
+      userId: string;
+      userName: string;
+      userRole: UserRole;
+      userBranch?: string;
+      content: string;
+    }
+  ): { resource: Resource; comment: ResourceComment } | null {
+    const resource = this.findResourceById(resourceId);
+    if (!resource) return null;
+
+    if (!resource.comments) {
+      resource.comments = [];
+    }
+
+    const commentObj: ResourceComment = {
+      id: 'com-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+      resourceId,
+      userId: commentData.userId,
+      userName: commentData.userName,
+      userRole: commentData.userRole,
+      userBranch: commentData.userBranch,
+      content: commentData.content,
+      createdAt: new Date().toISOString(),
+    };
+
+    resource.comments.unshift(commentObj);
+    this.persist();
+    return { resource, comment: commentObj };
   }
 
   // --- Announcements ---

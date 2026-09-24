@@ -391,3 +391,47 @@ userRouter.post('/:id/toggle-status', authMiddleware, requireAdmin, async (req: 
 
   return res.json({ success: true, isActive: updated?.isActive });
 });
+
+// Self-service profile & assigned subjects/classes update for current teacher
+userRouter.put('/profile', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user!.id;
+  const user = db.findUserById(userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const {
+    fullName,
+    phone,
+    designation,
+    assignedSubjectIds,
+    assignedClassIds,
+  } = req.body;
+
+  const updated = db.updateUser(userId, {
+    fullName: fullName !== undefined ? fullName : user.fullName,
+    phone: phone !== undefined ? phone : user.phone,
+    designation: designation !== undefined ? designation : user.designation,
+    assignedSubjectIds: Array.isArray(assignedSubjectIds) ? assignedSubjectIds : user.assignedSubjectIds,
+    assignedClassIds: Array.isArray(assignedClassIds) ? assignedClassIds : user.assignedClassIds,
+  });
+
+  try {
+    if (updated) {
+      await syncUserToSupabase(updated, updated.passwordHash);
+    }
+  } catch (syncErr) {
+    console.warn('[Supabase] Profile update sync notice:', syncErr);
+  }
+
+  db.logActivity({
+    userId: user.id,
+    userName: updated?.fullName || user.fullName,
+    userRole: user.role,
+    branchName: user.branchName || 'DIPS Branch',
+    action: 'UPDATE',
+    details: `Updated personal profile & assigned subjects/classes.`,
+  });
+
+  const { passwordHash: _, ...safe } = updated!;
+  return res.json({ success: true, user: safe });
+});
+
