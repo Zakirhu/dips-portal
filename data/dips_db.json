@@ -231,6 +231,101 @@
   ],
   "classes": [
     {
+      "id": "class-pre-nursery",
+      "name": "Pre-Nursery",
+      "code": "Pre-Nur",
+      "order": -2,
+      "sections": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": "class-nursery",
+      "name": "Nursery",
+      "code": "Nur",
+      "order": -1,
+      "sections": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": "class-lkg",
+      "name": "LKG",
+      "code": "LKG",
+      "order": 0,
+      "sections": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": "class-ukg",
+      "name": "UKG",
+      "code": "UKG",
+      "order": 0.5,
+      "sections": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": "class-1",
+      "name": "Class I",
+      "code": "I",
+      "order": 1,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-2",
+      "name": "Class II",
+      "code": "II",
+      "order": 2,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-3",
+      "name": "Class III",
+      "code": "III",
+      "order": 3,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-4",
+      "name": "Class IV",
+      "code": "IV",
+      "order": 4,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "class-5",
+      "name": "Class V",
+      "code": "V",
+      "order": 5,
+      "sections": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
       "id": "class-6",
       "name": "Class VI",
       "code": "VI",
@@ -290,44 +385,88 @@
     {
       "id": "class-11",
       "name": "Class XI",
-      "code": "XI",
+      "code": "Class XI (Science / Commerce / Humanities / Vocational)",
       "order": 11,
       "sections": [
-        "Medical",
-        "Non-Medical",
+        "Science",
         "Commerce",
-        "Humanities"
+        "Humanities",
+        "Vocational"
       ]
     },
     {
       "id": "class-12",
       "name": "Class XII",
-      "code": "XII",
+      "code": "Class XII (Science / Commerce / Humanities / Vocational)",
       "order": 12,
       "sections": [
-        "Medical",
-        "Non-Medical",
+        "Science",
         "Commerce",
-        "Humanities"
+        "Humanities",
+        "Vocational"
       ]
     }
   ],
   "subjects": [
     {
-      "id": "sub-cs",
-      "name": "Computer Science & IT",
-      "code": "CS",
-      "department": "Information Technology",
+      "id": "sub-eng-pp",
+      "name": "English",
+      "code": "ENG",
+      "department": "Languages",
+      "applicableClasses": [
+        "class-pre-nursery",
+        "class-nursery",
+        "class-lkg",
+        "class-ukg",
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "English Alphabet, Phonics, Vocabulary, Reading, and Grammar."
+    },
+    {
+      "id": "sub-hindi",
+      "name": "Hindi",
+      "code": "HINDI",
+      "department": "Languages",
+      "applicableClasses": [
+        "class-pre-nursery",
+        "class-nursery",
+        "class-lkg",
+        "class-ukg",
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "Hindi Varnmala, Shabd Gyan, Vyakaran, and Literature."
+    },
+    {
+      "id": "sub-punjabi",
+      "name": "Punjabi",
+      "code": "PUN",
+      "department": "Languages",
       "applicableClasses": [
         "class-6",
         "class-7",
         "class-8",
         "class-9",
-        "class-10",
-        "class-11",
-        "class-12"
+        "class-10"
       ],
-      "description": "Python, Programming Fundamentals, Data Structures, Web Technology, and CBSE IT curriculum."
+      "description": "Punjabi Vyakaran, Reader, and Poetry for Punjab Board / CBSE standards."
     },
     {
       "id": "sub-math",
@@ -335,15 +474,36 @@
       "code": "MATH",
       "department": "Mathematics",
       "applicableClasses": [
+        "class-pre-nursery",
+        "class-nursery",
+        "class-lkg",
+        "class-ukg",
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
         "class-6",
         "class-7",
         "class-8",
         "class-9",
-        "class-10",
-        "class-11",
-        "class-12"
+        "class-10"
       ],
-      "description": "Algebra, Geometry, Calculus, Arithmetic, and Trigonometry."
+      "description": "Number work, Counting, Arithmetic, Algebra, Geometry, and Advanced Mathematics."
+    },
+    {
+      "id": "sub-evs",
+      "name": "Environmental Studies (EVS)",
+      "code": "EVS",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5"
+      ],
+      "description": "Surroundings, Nature, Health, and Basic Science concepts for Primary classes."
     },
     {
       "id": "sub-sci",
@@ -360,22 +520,6 @@
       "description": "General Science covering Physics, Chemistry, and Life Sciences."
     },
     {
-      "id": "sub-eng",
-      "name": "English",
-      "code": "ENG",
-      "department": "Languages",
-      "applicableClasses": [
-        "class-6",
-        "class-7",
-        "class-8",
-        "class-9",
-        "class-10",
-        "class-11",
-        "class-12"
-      ],
-      "description": "English Literature, Grammar, Reading Comprehension, and Creative Writing."
-    },
-    {
       "id": "sub-sst",
       "name": "Social Science",
       "code": "SST",
@@ -390,6 +534,136 @@
       "description": "History, Civics, Geography, Economics, and Disaster Management."
     },
     {
+      "id": "sub-computer",
+      "name": "Computer / ICT / IT",
+      "code": "ICT",
+      "department": "Information Technology",
+      "applicableClasses": [
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "Computer basics, MS Office, coding fundamentals, and Information Technology."
+    },
+    {
+      "id": "sub-gk",
+      "name": "General Knowledge",
+      "code": "GK",
+      "department": "General Studies",
+      "applicableClasses": [
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8"
+      ],
+      "description": "World facts, current affairs, and general awareness."
+    },
+    {
+      "id": "sub-art",
+      "name": "Art & Craft / Art Education",
+      "code": "ART",
+      "department": "Creative Arts",
+      "applicableClasses": [
+        "class-pre-nursery",
+        "class-nursery",
+        "class-lkg",
+        "class-ukg",
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10"
+      ],
+      "description": "Drawing, sketching, coloring, craft work, and fine arts."
+    },
+    {
+      "id": "sub-music",
+      "name": "Music",
+      "code": "MUSIC",
+      "department": "Creative Arts",
+      "applicableClasses": [
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5"
+      ],
+      "description": "Vocal, rhythm, and school prayer/anthem training."
+    },
+    {
+      "id": "sub-pe",
+      "name": "Physical Education and Well-being",
+      "code": "PE",
+      "department": "Sports",
+      "applicableClasses": [
+        "class-1",
+        "class-2",
+        "class-3",
+        "class-4",
+        "class-5",
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-9",
+        "class-10",
+        "class-11",
+        "class-12"
+      ],
+      "description": "Sports, yoga, physical fitness, and mental well-being."
+    },
+    {
+      "id": "sub-skill",
+      "name": "Skill Education / Skill Module",
+      "code": "SKILL",
+      "department": "Vocational",
+      "applicableClasses": [
+        "class-6",
+        "class-7",
+        "class-8",
+        "class-11",
+        "class-12"
+      ],
+      "description": "Vocational training, skill modules, and hands-on professional learning."
+    },
+    {
+      "id": "sub-ai",
+      "name": "Computational Thinking & AI (CT & AI)",
+      "code": "AI",
+      "department": "Information Technology",
+      "applicableClasses": [
+        "class-9",
+        "class-10"
+      ],
+      "description": "Artificial Intelligence, machine learning basics, and computational thinking."
+    },
+    {
+      "id": "sub-eng-core",
+      "name": "English Core",
+      "code": "ENG-CORE",
+      "department": "Languages",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Advanced English Literature, Writing Skills, and Comprehension for Senior Secondary."
+    },
+    {
       "id": "sub-phy",
       "name": "Physics",
       "code": "PHY",
@@ -398,7 +672,7 @@
         "class-11",
         "class-12"
       ],
-      "description": "Mechanics, Optics, Thermodynamics, Electromagnetism, Modern Physics."
+      "description": "Mechanics, Optics, Thermodynamics, Electromagnetism, and Modern Physics."
     },
     {
       "id": "sub-chem",
@@ -410,6 +684,193 @@
         "class-12"
       ],
       "description": "Physical, Organic, and Inorganic Chemistry CBSE Curriculum."
+    },
+    {
+      "id": "sub-bio",
+      "name": "Biology",
+      "code": "BIO",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Botany, Zoology, Genetics, Biotechnology, and Human Physiology."
+    },
+    {
+      "id": "sub-cs-sr",
+      "name": "Computer Science",
+      "code": "CS",
+      "department": "Information Technology",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Python programming, data structures, SQL databases, and computer networks."
+    },
+    {
+      "id": "sub-ip",
+      "name": "Informatics Practices",
+      "code": "IP",
+      "department": "Information Technology",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Pandas, Matplotlib, MySQL, and internet security."
+    },
+    {
+      "id": "sub-biotech",
+      "name": "Biotechnology",
+      "code": "BIOTECH",
+      "department": "Sciences",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Recombinant DNA technology, protein structure, and bioinformatics."
+    },
+    {
+      "id": "sub-psych",
+      "name": "Psychology",
+      "code": "PSYCH",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Human behavior, cognitive processes, mental health, and psychological disorders."
+    },
+    {
+      "id": "sub-eco",
+      "name": "Economics",
+      "code": "ECO",
+      "department": "Commerce & Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Microeconomics, Macroeconomics, and Indian Economic Development."
+    },
+    {
+      "id": "sub-applied-math",
+      "name": "Applied Mathematics",
+      "code": "APPL-MATH",
+      "department": "Mathematics",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Financial mathematics, calculus, probability, and statistics."
+    },
+    {
+      "id": "sub-acc",
+      "name": "Accountancy",
+      "code": "ACC",
+      "department": "Commerce",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Financial accounting, partnership accounts, company accounts, and financial statement analysis."
+    },
+    {
+      "id": "sub-bs",
+      "name": "Business Studies",
+      "code": "BS",
+      "department": "Commerce",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Principles of management, business finance, marketing, and entrepreneurship."
+    },
+    {
+      "id": "sub-entre",
+      "name": "Entrepreneurship",
+      "code": "ENTRE",
+      "department": "Commerce & Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Business planning, resource mobilization, enterprise creation, and market dynamics."
+    },
+    {
+      "id": "sub-history",
+      "name": "History",
+      "code": "HIST",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Ancient, medieval, and modern world history, Indian history, and cultural heritage."
+    },
+    {
+      "id": "sub-pol-sci",
+      "name": "Political Science",
+      "code": "POL-SCI",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Indian constitution, political theory, international relations, and global politics."
+    },
+    {
+      "id": "sub-geog",
+      "name": "Geography",
+      "code": "GEOG",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Physical geography, human geography, India physical environment, and map work."
+    },
+    {
+      "id": "sub-socio",
+      "name": "Sociology",
+      "code": "SOCIO",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Indian society, social change, social institutions, and stratification."
+    },
+    {
+      "id": "sub-legal",
+      "name": "Legal Studies",
+      "code": "LEGAL",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Judiciary, law of property, contracts, torts, and criminal law in India."
+    },
+    {
+      "id": "sub-fine-arts",
+      "name": "Fine Arts / Painting",
+      "code": "ARTS",
+      "department": "Creative Arts",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "History of Indian art, painting techniques, sculpture, and practical aesthetics."
+    },
+    {
+      "id": "sub-home-sci",
+      "name": "Home Science",
+      "code": "HOME-SCI",
+      "department": "Humanities",
+      "applicableClasses": [
+        "class-11",
+        "class-12"
+      ],
+      "description": "Food science, nutrition, human development, fabric & apparel, and resource management."
     }
   ],
   "academicSessions": [
@@ -445,6 +906,135 @@
       "section": null,
       "assignedSubjectIds": [],
       "assignedClassIds": []
+    },
+    {
+      "id": "user-admin-1",
+      "username": "admin",
+      "email": "admin@dips.edu.in",
+      "fullName": "DIPS Central Administration",
+      "role": "admin",
+      "branchId": "branch-urban-estate",
+      "branchName": "DIPS School, Urban Estate Phase-1",
+      "phone": null,
+      "designation": "Director General & Academic Controller",
+      "section": null,
+      "assignedSubjectIds": [
+        "sub-math",
+        "sub-sci",
+        "sub-cs"
+      ],
+      "assignedClassIds": [
+        "cls-9",
+        "cls-10",
+        "cls-11",
+        "cls-12"
+      ],
+      "isActive": true,
+      "createdAt": "2026-09-24T04:08:16.285349+00:00",
+      "passwordHash": ""
+    },
+    {
+      "id": "user-teacher-1",
+      "username": "teacher",
+      "email": "teacher@dips.edu.in",
+      "fullName": "Prof. Harpreet Singh",
+      "role": "teacher",
+      "branchId": "branch-urban-estate",
+      "branchName": "DIPS School, Urban Estate Phase-1",
+      "phone": null,
+      "designation": "Senior Mathematics PGT",
+      "section": null,
+      "assignedSubjectIds": [
+        "sub-math",
+        "sub-cs"
+      ],
+      "assignedClassIds": [
+        "cls-9",
+        "cls-10",
+        "cls-11",
+        "cls-12"
+      ],
+      "isActive": true,
+      "createdAt": "2026-09-24T04:08:16.285349+00:00",
+      "passwordHash": ""
+    },
+    {
+      "id": "user-coordinator-1",
+      "username": "coordinator",
+      "email": "coordinator@dips.edu.in",
+      "fullName": "Mrs. Sunita Sharma",
+      "role": "coordinator",
+      "branchId": "branch-tanda",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "phone": null,
+      "designation": "Branch Academic Coordinator",
+      "section": null,
+      "assignedSubjectIds": [
+        "sub-sci",
+        "sub-math"
+      ],
+      "assignedClassIds": [
+        "cls-6",
+        "cls-7",
+        "cls-8",
+        "cls-9",
+        "cls-10"
+      ],
+      "isActive": true,
+      "createdAt": "2026-09-24T04:08:16.285349+00:00",
+      "passwordHash": ""
+    },
+    {
+      "id": "user-tea-160900",
+      "username": "1",
+      "email": "jass@gmail.com",
+      "fullName": "jass",
+      "role": "teacher",
+      "branchId": "branch-dipsimt",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "phone": "4585745895",
+      "employeeId": "1",
+      "designation": "TGT Teacher",
+      "section": null,
+      "assignedSubjectIds": [
+        "sub-cs",
+        "sub-math",
+        "sub-sci"
+      ],
+      "assignedClassIds": [
+        "class-10"
+      ],
+      "isActive": true,
+      "createdAt": "2026-09-24T05:19:21.374068+00:00",
+      "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+    },
+    {
+      "id": "user-student-1",
+      "username": "student",
+      "email": "student@dips.edu.in",
+      "fullName": "Aarav Sharma",
+      "role": "student",
+      "branchId": "branch-urban-estate",
+      "branchName": "DIPS School, Urban Estate Phase-1",
+      "phone": null,
+      "designation": "Student - 10th A",
+      "classId": "cls-10",
+      "className": "Class 10",
+      "section": "A",
+      "assignedSubjectIds": [
+        "sub-math",
+        "sub-sci",
+        "sub-eng",
+        "sub-punjabi",
+        "sub-sst",
+        "sub-cs"
+      ],
+      "assignedClassIds": [
+        "cls-10"
+      ],
+      "isActive": true,
+      "createdAt": "2026-09-24T04:08:16.285349+00:00",
+      "passwordHash": ""
     }
   ],
   "resources": [
@@ -804,6 +1394,38 @@
   ],
   "notifications": [],
   "activityLogs": [
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "LOGIN",
+      "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1790312874264-zbd2g",
+      "timestamp": "2026-09-25T05:07:54.264Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "UPDATE",
+      "details": "Updated personal profile & assigned subjects/classes.",
+      "id": "act-1790312257593-klbx5",
+      "timestamp": "2026-09-25T04:57:37.593Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "LOGIN",
+      "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1790312232576-p0nut",
+      "timestamp": "2026-09-25T04:57:12.576Z"
+    },
     {
       "userId": "user-admin",
       "userName": "DIPS Begowal Administration",
