@@ -393,7 +393,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Role Badge */}
           <span
-            className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-bold rounded-lg border uppercase tracking-wider ${roleBadge.bg} ${roleBadge.text} ${roleBadge.border}`}
+            className={`hidden sm:inline-block px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-bold rounded-lg border uppercase tracking-wider ${roleBadge.bg} ${roleBadge.text} ${roleBadge.border}`}
           >
             {currentUser.role}
           </span>

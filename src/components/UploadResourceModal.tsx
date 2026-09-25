@@ -51,11 +51,13 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
   initialSubjectId,
   initialClassId,
 }) => {
-  // Allowed subjects: if teacher, only assigned subjects; if admin, all subjects
+  // Allowed subjects: if admin or no specific assigned subjects, show all subjects; otherwise filter
   const allowedSubjects =
-    currentUser.role === 'admin'
+    currentUser.role === 'admin' || !currentUser.assignedSubjectIds || currentUser.assignedSubjectIds.length === 0
       ? subjects
       : subjects.filter((s) => currentUser.assignedSubjectIds?.includes(s.id));
+  
+  const finalAllowedSubjects = allowedSubjects.length > 0 ? allowedSubjects : subjects;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -181,31 +183,32 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
   const selectedCls = classes.find((c) => c.id === classId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
+      <div className="relative w-full h-full sm:h-auto sm:max-h-[92vh] max-w-2xl flex flex-col bg-white sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-900 text-white">
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-slate-900 text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
               <FilePlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Drag & Drop Batch Upload</h3>
-              <p className="text-xs text-slate-400">
-                Multi-file batch upload with auto-tagging • DIPS Central
+              <h3 className="text-sm sm:text-base font-bold text-white">Upload Educational Resource</h3>
+              <p className="text-[11px] sm:text-xs text-slate-400">
+                Single or batch upload with auto-tagging • DIPS Network
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Close dialog"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -214,20 +217,20 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
           )}
 
           {/* Auto-Tagging Metadata Preview Banner */}
-          <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-200 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+          <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-200 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
                 <Layers className="w-4 h-4" />
               </div>
-              <div>
-                <span className="font-bold text-indigo-900 block">Auto-Tagging Enabled</span>
-                <span className="text-[11px] text-indigo-700">
-                  Files dropped will automatically inherit: <strong>{selectedSub?.name || 'Subject'}</strong> ({selectedCls?.name || 'Class'})
+              <div className="min-w-0">
+                <span className="font-bold text-indigo-900 block text-xs truncate">Auto-Tagging Enabled</span>
+                <span className="text-[10px] sm:text-[11px] text-indigo-700 block truncate">
+                  Will inherit: <strong>{selectedSub?.name || 'Subject'}</strong> ({selectedCls?.name || 'Class'})
                 </span>
               </div>
             </div>
-            <span className="px-2.5 py-1 bg-white text-indigo-800 rounded-lg font-bold border border-indigo-200 text-[11px]">
-              {files.length} Files Selected
+            <span className="px-2 py-1 bg-white text-indigo-800 rounded-lg font-bold border border-indigo-200 text-[10px] sm:text-[11px] shrink-0">
+              {files.length} Selected
             </span>
           </div>
 
@@ -242,7 +245,7 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 required
               >
-                {allowedSubjects.map((sub) => (
+                {finalAllowedSubjects.map((sub) => (
                   <option key={sub.id} value={sub.id}>
                     {sub.name} ({sub.code})
                   </option>
@@ -349,10 +352,10 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
             />
           </div>
 
-          {/* Drag & Drop Zone */}
+          {/* Drag & Drop Zone & Mobile File Picker */}
           <div>
             <label className="block font-semibold text-slate-700 mb-1">
-              Drag & Drop Multiple Files Here (Batch Upload)
+              Upload Files (PDF, Notes, Images, Worksheets)
             </label>
             <div
               onDragOver={(e) => {
@@ -361,8 +364,8 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
               }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
-                dragOver ? 'border-indigo-600 bg-indigo-50/50 scale-[1.01]' : 'border-slate-300 bg-slate-50/70 hover:border-indigo-400'
+              className={`border-2 border-dashed rounded-2xl p-5 sm:p-6 text-center transition-all ${
+                dragOver ? 'border-indigo-600 bg-indigo-50/50 scale-[1.01]' : 'border-slate-300 bg-slate-50/80 hover:border-indigo-400'
               }`}
             >
               <input
@@ -378,11 +381,14 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
                 <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2 shadow-inner">
                   <Upload className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-bold text-indigo-700 hover:underline">
-                  Click to select multiple files or drag & drop here
+                <span className="text-xs sm:text-sm font-bold text-indigo-700 hover:underline">
+                  Tap to Select Files or Photos from Phone
                 </span>
-                <span className="text-[11px] text-slate-400 mt-1">
-                  Supports PDF, Word, PowerPoint, Excel, Images, Video, ZIP (Select as many as you want)
+                <span className="text-[11px] text-slate-400 mt-1 max-w-sm">
+                  PDF documents, camera photos, Word, PowerPoint, Excel, or question papers
+                </span>
+                <span className="mt-2.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-xs sm:hidden">
+                  📁 Choose from Mobile Device
                 </span>
               </label>
             </div>
@@ -438,26 +444,26 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
             />
           </div>
 
-          {/* Footer Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <span className="text-slate-400">
-              Uploader: <strong>{currentUser.fullName}</strong>
+          {/* Footer Buttons (Sticky Bottom on Mobile & Desktop) */}
+          <div className="sticky bottom-0 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-lg z-20">
+            <span className="hidden sm:inline text-slate-400 text-xs truncate max-w-[200px]">
+              Faculty: <strong>{currentUser.fullName}</strong>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2.5 font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer min-h-[42px]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading || files.length === 0}
-                className="px-6 py-2.5 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                disabled={loading || (files.length === 0 && !externalLink && !title.trim())}
+                className="flex-1 sm:flex-initial px-6 py-2.5 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer min-h-[42px] active:scale-[0.98]"
               >
                 <Upload className="w-4 h-4" />
-                {loading ? 'Batch Uploading...' : `Upload ${files.length} Files`}
+                {loading ? 'Publishing...' : files.length > 1 ? `Upload ${files.length} Files` : 'Publish Resource'}
               </button>
             </div>
           </div>

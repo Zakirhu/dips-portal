@@ -273,31 +273,65 @@ const defaultBranches: Branch[] = [
 ];
 
 const defaultClasses: AcademicClass[] = [
+  { id: 'class-pre-nursery', name: 'Pre-Nursery', code: 'Pre-Nur', order: -2, sections: ['A', 'B'] },
+  { id: 'class-nursery', name: 'Nursery', code: 'Nur', order: -1, sections: ['A', 'B'] },
+  { id: 'class-lkg', name: 'LKG', code: 'LKG', order: 0, sections: ['A', 'B'] },
+  { id: 'class-ukg', name: 'UKG', code: 'UKG', order: 0.5, sections: ['A', 'B'] },
+  { id: 'class-1', name: 'Class I', code: 'I', order: 1, sections: ['A', 'B', 'C'] },
+  { id: 'class-2', name: 'Class II', code: 'II', order: 2, sections: ['A', 'B', 'C'] },
+  { id: 'class-3', name: 'Class III', code: 'III', order: 3, sections: ['A', 'B', 'C'] },
+  { id: 'class-4', name: 'Class IV', code: 'IV', order: 4, sections: ['A', 'B', 'C'] },
+  { id: 'class-5', name: 'Class V', code: 'V', order: 5, sections: ['A', 'B', 'C'] },
   { id: 'class-6', name: 'Class VI', code: 'VI', order: 6, sections: ['A', 'B', 'C'] },
   { id: 'class-7', name: 'Class VII', code: 'VII', order: 7, sections: ['A', 'B', 'C'] },
   { id: 'class-8', name: 'Class VIII', code: 'VIII', order: 8, sections: ['A', 'B', 'C'] },
   { id: 'class-9', name: 'Class IX', code: 'IX', order: 9, sections: ['A', 'B', 'C', 'D'] },
   { id: 'class-10', name: 'Class X', code: 'X', order: 10, sections: ['A', 'B', 'C', 'D'] },
-  { id: 'class-11', name: 'Class XI', code: 'XI', order: 11, sections: ['Medical', 'Non-Medical', 'Commerce', 'Humanities'] },
-  { id: 'class-12', name: 'Class XII', code: 'XII', order: 12, sections: ['Medical', 'Non-Medical', 'Commerce', 'Humanities'] },
+  { id: 'class-11', name: 'Class XI', code: 'Class XI (Science / Commerce / Humanities / Vocational)', order: 11, sections: ['Science', 'Commerce', 'Humanities', 'Vocational'] },
+  { id: 'class-12', name: 'Class XII', code: 'Class XII (Science / Commerce / Humanities / Vocational)', order: 12, sections: ['Science', 'Commerce', 'Humanities', 'Vocational'] },
 ];
 
 const defaultSubjects: Subject[] = [
+  // Pre-Primary & Foundation
   {
-    id: 'sub-cs',
-    name: 'Computer Science & IT',
-    code: 'CS',
-    department: 'Information Technology',
-    applicableClasses: ['class-6', 'class-7', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'],
-    description: 'Python, Programming Fundamentals, Data Structures, Web Technology, and CBSE IT curriculum.',
+    id: 'sub-eng-pp',
+    name: 'English',
+    code: 'ENG',
+    department: 'Languages',
+    applicableClasses: ['class-pre-nursery', 'class-nursery', 'class-lkg', 'class-ukg', 'class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'English Alphabet, Phonics, Vocabulary, Reading, and Grammar.',
+  },
+  {
+    id: 'sub-hindi',
+    name: 'Hindi',
+    code: 'HINDI',
+    department: 'Languages',
+    applicableClasses: ['class-pre-nursery', 'class-nursery', 'class-lkg', 'class-ukg', 'class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'Hindi Varnmala, Shabd Gyan, Vyakaran, and Literature.',
+  },
+  {
+    id: 'sub-punjabi',
+    name: 'Punjabi',
+    code: 'PUN',
+    department: 'Languages',
+    applicableClasses: ['class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'Punjabi Vyakaran, Reader, and Poetry for Punjab Board / CBSE standards.',
   },
   {
     id: 'sub-math',
     name: 'Mathematics',
     code: 'MATH',
     department: 'Mathematics',
-    applicableClasses: ['class-6', 'class-7', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'],
-    description: 'Algebra, Geometry, Calculus, Arithmetic, and Trigonometry.',
+    applicableClasses: ['class-pre-nursery', 'class-nursery', 'class-lkg', 'class-ukg', 'class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'Number work, Counting, Arithmetic, Algebra, Geometry, and Advanced Mathematics.',
+  },
+  {
+    id: 'sub-evs',
+    name: 'Environmental Studies (EVS)',
+    code: 'EVS',
+    department: 'Sciences',
+    applicableClasses: ['class-1', 'class-2', 'class-3', 'class-4', 'class-5'],
+    description: 'Surroundings, Nature, Health, and Basic Science concepts for Primary classes.',
   },
   {
     id: 'sub-sci',
@@ -308,14 +342,6 @@ const defaultSubjects: Subject[] = [
     description: 'General Science covering Physics, Chemistry, and Life Sciences.',
   },
   {
-    id: 'sub-eng',
-    name: 'English',
-    code: 'ENG',
-    department: 'Languages',
-    applicableClasses: ['class-6', 'class-7', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'],
-    description: 'English Literature, Grammar, Reading Comprehension, and Creative Writing.',
-  },
-  {
     id: 'sub-sst',
     name: 'Social Science',
     code: 'SST',
@@ -324,12 +350,78 @@ const defaultSubjects: Subject[] = [
     description: 'History, Civics, Geography, Economics, and Disaster Management.',
   },
   {
+    id: 'sub-computer',
+    name: 'Computer / ICT / IT',
+    code: 'ICT',
+    department: 'Information Technology',
+    applicableClasses: ['class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'Computer basics, MS Office, coding fundamentals, and Information Technology.',
+  },
+  {
+    id: 'sub-gk',
+    name: 'General Knowledge',
+    code: 'GK',
+    department: 'General Studies',
+    applicableClasses: ['class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8'],
+    description: 'World facts, current affairs, and general awareness.',
+  },
+  {
+    id: 'sub-art',
+    name: 'Art & Craft / Art Education',
+    code: 'ART',
+    department: 'Creative Arts',
+    applicableClasses: ['class-pre-nursery', 'class-nursery', 'class-lkg', 'class-ukg', 'class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10'],
+    description: 'Drawing, sketching, coloring, craft work, and fine arts.',
+  },
+  {
+    id: 'sub-music',
+    name: 'Music',
+    code: 'MUSIC',
+    department: 'Creative Arts',
+    applicableClasses: ['class-1', 'class-2', 'class-3', 'class-4', 'class-5'],
+    description: 'Vocal, rhythm, and school prayer/anthem training.',
+  },
+  {
+    id: 'sub-pe',
+    name: 'Physical Education and Well-being',
+    code: 'PE',
+    department: 'Sports',
+    applicableClasses: ['class-1', 'class-2', 'class-3', 'class-4', 'class-5', 'class-6', 'class-7', 'class-8', 'class-9', 'class-10', 'class-11', 'class-12'],
+    description: 'Sports, yoga, physical fitness, and mental well-being.',
+  },
+  {
+    id: 'sub-skill',
+    name: 'Skill Education / Skill Module',
+    code: 'SKILL',
+    department: 'Vocational',
+    applicableClasses: ['class-6', 'class-7', 'class-8', 'class-11', 'class-12'],
+    description: 'Vocational training, skill modules, and hands-on professional learning.',
+  },
+  {
+    id: 'sub-ai',
+    name: 'Computational Thinking & AI (CT & AI)',
+    code: 'AI',
+    department: 'Information Technology',
+    applicableClasses: ['class-9', 'class-10'],
+    description: 'Artificial Intelligence, machine learning basics, and computational thinking.',
+  },
+
+  // 🧪 SCIENCE STREAM (Class XI & XII)
+  {
+    id: 'sub-eng-core',
+    name: 'English Core',
+    code: 'ENG-CORE',
+    department: 'Languages',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Advanced English Literature, Writing Skills, and Comprehension for Senior Secondary.',
+  },
+  {
     id: 'sub-phy',
     name: 'Physics',
     code: 'PHY',
     department: 'Sciences',
     applicableClasses: ['class-11', 'class-12'],
-    description: 'Mechanics, Optics, Thermodynamics, Electromagnetism, Modern Physics.',
+    description: 'Mechanics, Optics, Thermodynamics, Electromagnetism, and Modern Physics.',
   },
   {
     id: 'sub-chem',
@@ -338,6 +430,146 @@ const defaultSubjects: Subject[] = [
     department: 'Sciences',
     applicableClasses: ['class-11', 'class-12'],
     description: 'Physical, Organic, and Inorganic Chemistry CBSE Curriculum.',
+  },
+  {
+    id: 'sub-bio',
+    name: 'Biology',
+    code: 'BIO',
+    department: 'Sciences',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Botany, Zoology, Genetics, Biotechnology, and Human Physiology.',
+  },
+  {
+    id: 'sub-cs-sr',
+    name: 'Computer Science',
+    code: 'CS',
+    department: 'Information Technology',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Python programming, data structures, SQL databases, and computer networks.',
+  },
+  {
+    id: 'sub-ip',
+    name: 'Informatics Practices',
+    code: 'IP',
+    department: 'Information Technology',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Pandas, Matplotlib, MySQL, and internet security.',
+  },
+  {
+    id: 'sub-biotech',
+    name: 'Biotechnology',
+    code: 'BIOTECH',
+    department: 'Sciences',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Recombinant DNA technology, protein structure, and bioinformatics.',
+  },
+  {
+    id: 'sub-psych',
+    name: 'Psychology',
+    code: 'PSYCH',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Human behavior, cognitive processes, mental health, and psychological disorders.',
+  },
+  {
+    id: 'sub-eco',
+    name: 'Economics',
+    code: 'ECO',
+    department: 'Commerce & Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Microeconomics, Macroeconomics, and Indian Economic Development.',
+  },
+  {
+    id: 'sub-applied-math',
+    name: 'Applied Mathematics',
+    code: 'APPL-MATH',
+    department: 'Mathematics',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Financial mathematics, calculus, probability, and statistics.',
+  },
+
+  // 💼 COMMERCE STREAM (Class XI & XII)
+  {
+    id: 'sub-acc',
+    name: 'Accountancy',
+    code: 'ACC',
+    department: 'Commerce',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Financial accounting, partnership accounts, company accounts, and financial statement analysis.',
+  },
+  {
+    id: 'sub-bs',
+    name: 'Business Studies',
+    code: 'BS',
+    department: 'Commerce',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Principles of management, business finance, marketing, and entrepreneurship.',
+  },
+  {
+    id: 'sub-entre',
+    name: 'Entrepreneurship',
+    code: 'ENTRE',
+    department: 'Commerce & Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Business planning, resource mobilization, enterprise creation, and market dynamics.',
+  },
+
+  // 🎨 HUMANITIES / ARTS STREAM (Class XI & XII)
+  {
+    id: 'sub-history',
+    name: 'History',
+    code: 'HIST',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Ancient, medieval, and modern world history, Indian history, and cultural heritage.',
+  },
+  {
+    id: 'sub-pol-sci',
+    name: 'Political Science',
+    code: 'POL-SCI',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Indian constitution, political theory, international relations, and global politics.',
+  },
+  {
+    id: 'sub-geog',
+    name: 'Geography',
+    code: 'GEOG',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Physical geography, human geography, India physical environment, and map work.',
+  },
+  {
+    id: 'sub-socio',
+    name: 'Sociology',
+    code: 'SOCIO',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Indian society, social change, social institutions, and stratification.',
+  },
+  {
+    id: 'sub-legal',
+    name: 'Legal Studies',
+    code: 'LEGAL',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Judiciary, law of property, contracts, torts, and criminal law in India.',
+  },
+  {
+    id: 'sub-fine-arts',
+    name: 'Fine Arts / Painting',
+    code: 'ARTS',
+    department: 'Creative Arts',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'History of Indian art, painting techniques, sculpture, and practical aesthetics.',
+  },
+  {
+    id: 'sub-home-sci',
+    name: 'Home Science',
+    code: 'HOME-SCI',
+    department: 'Humanities',
+    applicableClasses: ['class-11', 'class-12'],
+    description: 'Food science, nutrition, human development, fabric & apparel, and resource management.',
   },
 ];
 
@@ -744,6 +976,39 @@ class Database {
           keptBranches.push(defB);
         }
         parsed.branches = keptBranches;
+
+        // Ensure parsed.classes precisely includes all defaultClasses
+        const defaultClassMap = new Map(defaultClasses.map((c) => [c.id, c]));
+        const keptClasses: AcademicClass[] = [];
+        if (parsed.classes) {
+          for (const c of parsed.classes) {
+            if (defaultClassMap.has(c.id)) {
+              keptClasses.push({ ...c, ...defaultClassMap.get(c.id) });
+              defaultClassMap.delete(c.id);
+            }
+          }
+        }
+        for (const [_, defC] of defaultClassMap) {
+          keptClasses.push(defC);
+        }
+        keptClasses.sort((a, b) => a.order - b.order);
+        parsed.classes = keptClasses;
+
+        // Ensure parsed.subjects precisely includes all defaultSubjects
+        const defaultSubMap = new Map(defaultSubjects.map((s) => [s.id, s]));
+        const keptSubjects: Subject[] = [];
+        if (parsed.subjects) {
+          for (const s of parsed.subjects) {
+            if (defaultSubMap.has(s.id)) {
+              keptSubjects.push({ ...s, ...defaultSubMap.get(s.id) });
+              defaultSubMap.delete(s.id);
+            }
+          }
+        }
+        for (const [_, defS] of defaultSubMap) {
+          keptSubjects.push(defS);
+        }
+        parsed.subjects = keptSubjects;
 
         if (!parsed.resources || parsed.resources.length === 0) {
           parsed.resources = defaultResources;

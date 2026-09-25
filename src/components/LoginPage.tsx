@@ -629,7 +629,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         setSelectedRole('teacher');
                         setError('');
                       }}
-                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                      className={`py-2.5 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px] ${
                         selectedRole === 'teacher'
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/40 ring-1 ring-indigo-400'
                           : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -645,7 +645,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         setSelectedRole('student');
                         setError('');
                       }}
-                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                      className={`py-2.5 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px] ${
                         selectedRole === 'student'
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/40 ring-1 ring-emerald-400'
                           : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -661,7 +661,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         setSelectedRole('admin');
                         setError('');
                       }}
-                      className={`py-2 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                      className={`py-2.5 px-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px] ${
                         selectedRole === 'admin'
                           ? 'bg-amber-600 text-white shadow-md shadow-amber-600/40 ring-1 ring-amber-400'
                           : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -906,7 +906,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                       {regForm.assignedSubjectIds.length} Selected
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
                     {subjects.map((sub) => {
                       const isChecked = regForm.assignedSubjectIds.includes(sub.id);
                       return (
@@ -922,7 +922,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                                 : [...cur, sub.id],
                             });
                           }}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 cursor-pointer ${
                             isChecked
                               ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
                               : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500 hover:bg-slate-850'
@@ -946,7 +946,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                       {regForm.assignedClassIds.length} Selected
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
                     {classes.map((cls) => {
                       const isChecked = regForm.assignedClassIds.includes(cls.id);
                       return (
@@ -968,7 +968,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                               : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500 hover:bg-slate-850'
                           }`}
                         >
-                          <span>{cls.code || cls.name}</span>
+                          <span>{cls.name}</span>
                           {isChecked && <CheckCircle2 className="w-3 h-3 text-white" />}
                         </button>
                       );

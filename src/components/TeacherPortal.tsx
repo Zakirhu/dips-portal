@@ -29,6 +29,10 @@ import {
   BookmarkCheck,
   Trash2,
   MessageSquare,
+  Compass,
+  ChevronDown,
+  ChevronUp,
+  Menu,
 } from 'lucide-react';
 import type {
   User,
@@ -233,6 +237,13 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   const [favSubjectId, setFavSubjectId] = useState<string>('all');
   const [favClassId, setFavClassId] = useState<string>('all');
 
+  // Mobile-specific interactive states & Stage filter for all 16 classes
+  const [classStageFilter, setClassStageFilter] = useState<
+    'all' | 'pre_primary' | 'primary' | 'middle' | 'secondary' | 'senior_secondary'
+  >('all');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -411,6 +422,44 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
+  // Group and filter classes by educational stage for mobile thumb ease
+  const filteredClassesByStage = useMemo(() => {
+    if (classStageFilter === 'all') return classes;
+    return classes.filter((cls) => {
+      const n = (cls.name + ' ' + cls.code).toLowerCase();
+      if (classStageFilter === 'pre_primary') {
+        return n.includes('nur') || n.includes('lkg') || n.includes('ukg');
+      }
+      if (classStageFilter === 'primary') {
+        return (
+          n.includes('class i ') ||
+          n.includes('class ii') ||
+          n.includes('class iii') ||
+          n.includes('class iv') ||
+          n.includes('class v') ||
+          (n.startsWith('i') && !n.startsWith('ix'))
+        );
+      }
+      if (classStageFilter === 'middle') {
+        return n.includes('class vi') || n.includes('class vii') || n.includes('class viii');
+      }
+      if (classStageFilter === 'secondary') {
+        return (n.includes('class ix') || n.includes('class x')) && !n.includes('xi') && !n.includes('xii');
+      }
+      if (classStageFilter === 'senior_secondary') {
+        return (
+          n.includes('class xi') ||
+          n.includes('class xii') ||
+          n.includes('science') ||
+          n.includes('commerce') ||
+          n.includes('humanities') ||
+          n.includes('vocational')
+        );
+      }
+      return true;
+    });
+  }, [classes, classStageFilter]);
+
   // Filter resources for current teacher's subjects across all branches
   const accessibleResources = resources.filter((r) =>
     currentUser.assignedSubjectIds?.includes(r.subjectId)
@@ -481,20 +530,20 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-28 md:py-8 space-y-4 sm:space-y-6">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs flex items-center gap-2 animate-fade-in">
+        <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs flex items-center gap-2 animate-fade-in">
           <BookmarkCheck className="w-4 h-4 text-amber-400" />
           <span>{toastMsg}</span>
         </div>
       )}
 
       {/* Teacher Welcome & Cross-Branch Collaboration Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-indigo-950/80">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-6 rounded-2xl shadow-lg border border-indigo-950/80">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white p-1 flex items-center justify-center shadow-md border border-indigo-400/30 shrink-0">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white p-1 flex items-center justify-center shadow-md border border-indigo-400/30 shrink-0">
               <img
                 src="/dips-logo.png"
                 alt="DIPS Institutions Logo"
@@ -503,18 +552,18 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 text-xs font-bold rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30">
                   Faculty Workspace
                 </span>
-                <span className="text-xs text-slate-300">
+                <span className="text-[11px] sm:text-xs text-slate-300">
                   {currentUser.branchName} • {currentUser.designation || 'Faculty Member'}
                 </span>
               </div>
-              <h2 className="text-2xl font-black tracking-tight text-white mt-1">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-1">
                 Welcome, {currentUser.fullName}
               </h2>
-              <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+              <p className="text-[11px] sm:text-xs text-slate-300 mt-1 max-w-2xl line-clamp-2 sm:line-clamp-none">
                 Assigned Subjects:{' '}
                 <strong className="text-amber-300">
                   {assignedSubjects.map((s) => s.name).join(', ') || 'General Faculty'}
@@ -525,14 +574,14 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
             <button
               onClick={() => {
                 loadData();
                 showToast('Refreshed curriculum resources');
               }}
               disabled={loading}
-              className="p-2.5 sm:px-3 text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-white/15"
+              className="p-2.5 sm:px-3 text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/15 min-h-[42px]"
               title="Refresh resources from central server"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-300' : ''}`} />
@@ -541,7 +590,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
             <button
               onClick={() => onOpenUpload(selectedSubjectId, selectedClassId)}
-              className="px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[42px] active:scale-[0.98]"
             >
               <Upload className="w-4 h-4" />
               <span>Upload New Resource</span>
@@ -550,19 +599,19 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
         </div>
 
         {/* Quick Collaboration Highlights Banner */}
-        <div className="mt-4 pt-4 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+        <div className="mt-3.5 pt-3.5 sm:mt-4 sm:pt-4 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-2.5 text-xs text-slate-300">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>
-              <strong>Cross-Branch Network:</strong> Resources in your subject are shared seamlessly across all DIPS institutions, colleges, and schools.
+            <span className="text-[11px] sm:text-xs">
+              <strong>Cross-Branch Network:</strong> Resources in your subject are shared seamlessly across all DIPS institutions.
             </span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
-            <span>{accessibleResources.length} Total Subject Resources</span>
+          <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-slate-400">
+            <span>{accessibleResources.length} Subject Resources</span>
             <span>•</span>
             <span className="text-amber-300 font-semibold">{favoriteResources.length} Bookmarked</span>
             <span>•</span>
-            <span>{myUploads.length} Contributed by You</span>
+            <span>{myUploads.length} Contributed</span>
           </div>
         </div>
       </div>
@@ -696,11 +745,37 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
           )}
 
           {/* Step 1: Select Subject */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Step 1: Select Assigned Subject
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                <span>Select Teaching Subject</span>
+              </h3>
+              {assignedSubjects.length > 1 && (
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {assignedSubjects.length} Assigned
+                </span>
+              )}
+            </div>
+
+            {/* Quick Mobile Dropdown if teacher wants fast 1-tap select on phones */}
+            <div className="block sm:hidden">
+              <select
+                value={selectedSubjectId}
+                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                aria-label="Select Assigned Teaching Subject"
+                className="w-full px-3.5 py-2.5 text-xs font-bold bg-white border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 shadow-2xs text-indigo-950 cursor-pointer"
+              >
+                {assignedSubjects.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name} ({sub.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subject Cards Grid (Finger-friendly on mobile, expanded on desktop) */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {assignedSubjects.map((sub) => {
                 const isSelected = selectedSubjectId === sub.id;
                 const count = resources.filter((r) => r.subjectId === sub.id).length;
@@ -708,20 +783,24 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                   <button
                     key={sub.id}
                     onClick={() => setSelectedSubjectId(sub.id)}
-                    className={`p-4 rounded-xl text-left border transition-all flex items-start justify-between cursor-pointer ${
+                    className={`p-3 sm:p-4 rounded-xl text-left border transition-all flex flex-col justify-between cursor-pointer min-h-[72px] sm:min-h-[88px] active:scale-[0.98] ${
                       isSelected
-                        ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-200 shadow-xs'
+                        ? 'bg-indigo-50 border-indigo-500 ring-2 ring-indigo-300 shadow-xs'
                         : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <div>
-                      <span className="text-xs font-mono text-indigo-600 font-bold">{sub.code}</span>
-                      <h4 className="text-sm font-bold text-slate-900 mt-0.5">{sub.name}</h4>
-                      <p className="text-[11px] text-slate-500 mt-1">{count} Shared Resources across DIPS</p>
+                    <div className="flex items-start justify-between gap-1 w-full">
+                      <span className="text-[10px] sm:text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100/80 text-indigo-700">
+                        {sub.code}
+                      </span>
+                      <BookOpen
+                        className={`w-4 h-4 shrink-0 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}
+                      />
                     </div>
-                    <BookOpen
-                      className={`w-5 h-5 shrink-0 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`}
-                    />
+                    <div className="mt-1.5">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">{sub.name}</h4>
+                      <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">{count} Shared Materials</p>
+                    </div>
                   </button>
                 );
               })}
@@ -730,12 +809,45 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
           {/* Step 2: Select Class */}
           {selectedSubject && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Step 2: Select Class for {selectedSubject.name}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {classes.map((cls) => {
+            <div className="space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                  <span>Select Class for {selectedSubject.name}</span>
+                </h3>
+                <span className="text-[11px] text-slate-400">
+                  Showing {filteredClassesByStage.length} of {classes.length} classes
+                </span>
+              </div>
+
+              {/* Mobile Stage Filter Tabs (Horizontal Scrollable Rail for easy thumb filtering) */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+                {[
+                  { key: 'all', label: `All Classes (${classes.length})` },
+                  { key: 'pre_primary', label: 'Pre-Primary' },
+                  { key: 'primary', label: 'Primary (I-V)' },
+                  { key: 'middle', label: 'Middle (VI-VIII)' },
+                  { key: 'secondary', label: 'Secondary (IX-X)' },
+                  { key: 'senior_secondary', label: 'Senior Sec (XI-XII)' },
+                ].map((stg) => (
+                  <button
+                    key={stg.key}
+                    type="button"
+                    onClick={() => setClassStageFilter(stg.key as any)}
+                    className={`px-3 py-1.5 rounded-lg font-bold shrink-0 transition-all cursor-pointer min-h-[34px] flex items-center justify-center ${
+                      classStageFilter === stg.key
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {stg.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Class Buttons Grid */}
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {filteredClassesByStage.map((cls) => {
                   const isSelected = selectedClassId === cls.id;
                   const count = resources.filter(
                     (r) => r.subjectId === selectedSubjectId && r.classId === cls.id
@@ -744,7 +856,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                     <button
                       key={cls.id}
                       onClick={() => setSelectedClassId(cls.id)}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer ${
+                      className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer min-h-[42px] active:scale-[0.98] ${
                         isSelected
                           ? 'bg-amber-500 text-white border-amber-600 shadow-xs ring-2 ring-amber-200'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -886,37 +998,39 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                         </div>
 
                         {/* Card Actions */}
-                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-1">
+                        <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5">
                           <button
                             onClick={() => onPreviewResource(res)}
-                            className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                            className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] active:scale-[0.98]"
                           >
-                            <Eye className="w-3.5 h-3.5" /> Preview
-                          </button>
-
-                          <button
-                            onClick={() => onOpenVersions(res)}
-                            className="px-2 py-1.5 text-xs font-medium text-amber-700 hover:text-amber-900 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1 cursor-pointer"
-                            title="View revisions & changelog"
-                          >
-                            <History className="w-3.5 h-3.5" /> Revisions ({res.versions?.length || 1})
-                          </button>
-
-                          <button
-                            onClick={() => onOpenCollaborate(res)}
-                            className="px-2.5 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
-                            title="Collaborate and upload Version N+1"
-                          >
-                            + Update
+                            <Eye className="w-4 h-4" /> <span>Preview</span>
                           </button>
 
                           <button
                             onClick={() => onDownload(res)}
-                            className="p-1.5 text-slate-600 hover:text-indigo-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                            className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] active:scale-[0.98]"
                             title="Download file"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className="w-4 h-4" /> <span>Download</span>
                           </button>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => onOpenVersions(res)}
+                              className="p-2 text-xs font-medium text-amber-700 hover:text-amber-900 rounded-xl hover:bg-amber-50 transition-colors flex items-center gap-1 cursor-pointer min-h-[40px] min-w-[40px] justify-center"
+                              title="View revisions & changelog"
+                            >
+                              <History className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => onOpenCollaborate(res)}
+                              className="px-2.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer min-h-[40px] flex items-center gap-1"
+                              title="Collaborate and upload Version N+1"
+                            >
+                              + Version
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -948,8 +1062,34 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="p-3.5 bg-white rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs">
+          {/* Mobile Filter Toggle Button */}
+          <div className="md:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              className="w-full flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 font-bold text-xs text-slate-800 shadow-2xs cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                <span>Search & Filter Materials</span>
+                {(searchQuery || selectedClassId || selectedCategory !== 'all') && (
+                  <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                )}
+              </div>
+              {mobileFiltersOpen ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+          </div>
+
+          {/* Filters Bar (Always visible on desktop, toggleable on mobile) */}
+          <div
+            className={`${
+              mobileFiltersOpen ? 'block' : 'hidden'
+            } md:block p-3.5 bg-white rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs`}
+          >
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">Search Term</label>
               <input
@@ -957,7 +1097,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                 placeholder="Topic, chapter, title, teacher..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-indigo-500"
               />
             </div>
 
@@ -966,7 +1106,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               <select
                 value={selectedSubjectId}
                 onChange={(e) => setSelectedSubjectId(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white cursor-pointer"
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
               >
                 {assignedSubjects.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -981,7 +1121,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               <select
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white cursor-pointer"
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
               >
                 <option value="">All Classes</option>
                 {classes.map((c) => (
@@ -997,7 +1137,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white cursor-pointer"
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
               >
                 <option value="all">All Categories</option>
                 <option value="Study Material">Study Material</option>
@@ -1006,10 +1146,109 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                 <option value="Teaching Resources">Teaching Resources</option>
               </select>
             </div>
+
+            {(searchQuery || selectedClassId || selectedCategory !== 'all') && (
+              <div className="sm:col-span-2 md:col-span-4 flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedClassId('');
+                    setSelectedCategory('all');
+                  }}
+                  className="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* List Table */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+          {/* MOBILE VIEW: Mobile Card Feed (Finger-Friendly, No Horizontal Scrolling) */}
+          <div className="md:hidden space-y-3">
+            {drilldownResources.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500">
+                <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-700">No resources found matching filters.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Try resetting search filters or changing subject/class.</p>
+              </div>
+            ) : (
+              drilldownResources.map((res) => {
+                const isFav = bookmarkedIds.includes(res.id);
+                return (
+                  <div
+                    key={res.id}
+                    className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          {res.subjectName}
+                        </span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-800 border border-amber-200">
+                          {res.className}
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700">
+                          v{res.currentVersion}
+                        </span>
+                      </div>
+                      <BookmarkButton
+                        isBookmarked={isFav}
+                        onToggle={() => handleToggleBookmark(res)}
+                        size="sm"
+                        activeColor="amber"
+                      />
+                    </div>
+
+                    <div onClick={() => onPreviewResource(res)} className="cursor-pointer">
+                      <h4 className="text-sm font-bold text-slate-900 leading-snug hover:text-indigo-600 transition-colors">
+                        {res.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Chapter: <strong className="text-slate-700">{res.chapter}</strong>
+                        {res.topic && <span> • {res.topic}</span>}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                      <span className="truncate max-w-[180px]">
+                        {res.branchName} • By {res.uploadedByName}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <StarRatingBadge rating={res.averageRating} count={res.ratingsCount} showZero={false} />
+                      </div>
+                    </div>
+
+                    {/* Touch Action Buttons for Mobile */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                      <button
+                        onClick={() => onPreviewResource(res)}
+                        className="flex-1 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] active:scale-[0.98]"
+                      >
+                        <Eye className="w-4 h-4" /> <span>Preview</span>
+                      </button>
+                      <button
+                        onClick={() => onDownload(res)}
+                        className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-h-[40px] active:scale-[0.98]"
+                      >
+                        <Download className="w-4 h-4" /> <span>Download</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenCollaborate(res)}
+                        className="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer min-h-[40px] flex items-center justify-center"
+                        title="Collaborate / Upload New Version"
+                      >
+                        + Version
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* DESKTOP VIEW: Data Table (Hidden on Mobile) */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
@@ -1954,6 +2193,143 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
           }}
         />
       )}
+
+      {/* =========================================================
+          MOBILE BOTTOM NAVIGATION DOCK (VISIBLE ON PHONES ONLY)
+          Provides quick, 1-tap thumb navigation for teachers
+          ========================================================= */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 text-white z-40 px-2 py-1.5 shadow-2xl safe-area-pb">
+        <div className="flex items-center justify-around relative max-w-lg mx-auto">
+          {/* 1. Explorer */}
+          <button
+            onClick={() => {
+              setActiveTab('navigator');
+              setShowMobileMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors cursor-pointer min-w-[54px] min-h-[46px] ${
+              activeTab === 'navigator' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Compass className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Curriculum</span>
+          </button>
+
+          {/* 2. Library */}
+          <button
+            onClick={() => {
+              setActiveTab('library');
+              setShowMobileMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors cursor-pointer min-w-[54px] min-h-[46px] ${
+              activeTab === 'library' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FolderGit2 className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Library</span>
+          </button>
+
+          {/* 3. Elevated Upload FAB in the Center */}
+          <button
+            onClick={() => {
+              setShowMobileMoreMenu(false);
+              onOpenUpload(selectedSubjectId, selectedClassId);
+            }}
+            className="flex flex-col items-center justify-center -mt-5 bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white rounded-full w-12 h-12 shadow-lg shadow-indigo-600/50 ring-4 ring-slate-900 active:scale-95 transition-transform cursor-pointer"
+            title="Upload New Educational Resource"
+          >
+            <Upload className="w-5 h-5" />
+            <span className="sr-only">Upload</span>
+          </button>
+
+          {/* 4. Saved / Favorites */}
+          <button
+            onClick={() => {
+              setActiveTab('favorites');
+              setShowMobileMoreMenu(false);
+            }}
+            className={`relative flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors cursor-pointer min-w-[54px] min-h-[46px] ${
+              activeTab === 'favorites' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Bookmark className={`w-5 h-5 ${activeTab === 'favorites' ? 'fill-amber-400' : ''}`} />
+            <span className="text-[10px] mt-0.5">Saved</span>
+            {favoriteResources.length > 0 && (
+              <span className="absolute top-1 right-2 w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center ring-1 ring-slate-900">
+                {favoriteResources.length > 9 ? '9+' : favoriteResources.length}
+              </span>
+            )}
+          </button>
+
+          {/* 5. Chat */}
+          <button
+            onClick={() => {
+              setActiveTab('chat');
+              setShowMobileMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors cursor-pointer min-w-[54px] min-h-[46px] ${
+              activeTab === 'chat' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Chat</span>
+          </button>
+
+          {/* 6. More (Uploads, Announcements, Profile) */}
+          <button
+            onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
+            className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-colors cursor-pointer min-w-[54px] min-h-[46px] ${
+              activeTab === 'my_uploads' || activeTab === 'announcements' || activeTab === 'profile'
+                ? 'text-indigo-400 font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">More</span>
+          </button>
+        </div>
+
+        {/* Mobile "More" Drawer Popover */}
+        {showMobileMoreMenu && (
+          <div className="absolute bottom-full left-3 right-3 mb-2 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl space-y-1 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+              <span>Faculty Options</span>
+              <button onClick={() => setShowMobileMoreMenu(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab('my_uploads');
+                setShowMobileMoreMenu(false);
+              }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 text-left text-xs font-semibold text-slate-200 cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-indigo-400" />
+              <span>My Contributions ({myUploads.length})</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('announcements');
+                setShowMobileMoreMenu(false);
+              }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 text-left text-xs font-semibold text-slate-200 cursor-pointer"
+            >
+              <Users className="w-4 h-4 text-indigo-400" />
+              <span>School Announcements ({announcements.length})</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('profile');
+                setShowMobileMoreMenu(false);
+              }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 text-left text-xs font-semibold text-slate-200 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-indigo-400" />
+              <span>Faculty Profile & Subject Assignment</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
