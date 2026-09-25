@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { db } from '../db.js';
 import {
   checkSupabaseHealth,
@@ -21,10 +23,20 @@ supabaseRouter.get('/status', async (req, res) => {
         ? `${SUPABASE_KEY.substring(0, 15)}...${SUPABASE_KEY.substring(SUPABASE_KEY.length - 4)}`
         : '***';
 
+    let schemaContent = SUPABASE_SQL_SCHEMA;
+    try {
+      const fileSchemaPath = path.join(process.cwd(), 'supabase_schema.sql');
+      if (fs.existsSync(fileSchemaPath)) {
+        schemaContent = fs.readFileSync(fileSchemaPath, 'utf-8');
+      }
+    } catch {
+      // fallback
+    }
+
     res.json({
       ...health,
       maskedKey,
-      sqlSchema: SUPABASE_SQL_SCHEMA,
+      sqlSchema: schemaContent,
     });
   } catch (err: any) {
     res.status(500).json({

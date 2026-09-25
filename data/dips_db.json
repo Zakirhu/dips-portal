@@ -1402,6 +1402,17 @@
       "action": "LOGIN",
       "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
       "ipAddress": "127.0.0.1",
+      "id": "act-1790313892676-7q3ud",
+      "timestamp": "2026-09-25T05:24:52.676Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "LOGIN",
+      "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
+      "ipAddress": "127.0.0.1",
       "id": "act-1790312874264-zbd2g",
       "timestamp": "2026-09-25T05:07:54.264Z"
     },

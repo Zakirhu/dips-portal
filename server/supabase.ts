@@ -377,7 +377,7 @@ export async function loadResourcesFromSupabase(): Promise<any[]> {
 export async function syncUserToSupabase(user: any, passwordHash?: string) {
   try {
     const client = getSupabaseClient();
-    const { error } = await client.from('users').upsert({
+    const payload: any = {
       id: user.id,
       username: user.username,
       email: user.email,
@@ -390,19 +390,36 @@ export async function syncUserToSupabase(user: any, passwordHash?: string) {
       admission_no: user.admissionNo || null,
       designation: user.designation || null,
       class_id: user.classId || null,
-      class_name: user.className || null,
       section: user.section || null,
       assigned_subject_ids: user.assignedSubjectIds || [],
       assigned_class_ids: user.assignedClassIds || [],
-      is_active: user.isActive !== false,
+      status: user.isActive !== false ? 'active' : 'inactive',
       password_hash: passwordHash || user.passwordHash || null,
-    });
-    if (error) {
-      console.warn(`[Supabase Sync] User sync notice: ${error.message}`);
-      return { success: false, error: error.message };
+    };
+
+    if (user.className) {
+      payload.class_name = user.className;
     }
+    if (user.isActive !== undefined) {
+      payload.is_active = user.isActive !== false;
+    }
+
+    const { error } = await client.from('users').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn(`[Supabase Sync] User primary upsert notice: ${error.message}`);
+      // Fallback: If column mismatch (like class_name or is_active), strip them and retry
+      delete payload.class_name;
+      delete payload.is_active;
+      const retry = await client.from('users').upsert(payload, { onConflict: 'id' });
+      if (retry.error) {
+        console.error(`[Supabase Sync] User retry upsert error: ${retry.error.message}`);
+        return { success: false, error: retry.error.message };
+      }
+    }
+    console.log(`[Supabase Sync] User ${user.email} (${user.id}) successfully synced to Supabase.`);
     return { success: true };
   } catch (err: any) {
+    console.error('[Supabase Sync] User sync exception:', err);
     return { success: false, error: err?.message };
   }
 }
