@@ -1,20 +1,31 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const DEFAULT_SUPABASE_PROJECT_ID = 'rqqjqflxbtfcrbywwtpc';
+export const DEFAULT_SUPABASE_PROJECT_ID = 'bckfzqysttnotbzudcxg';
 export const DEFAULT_SUPABASE_URL = `https://${DEFAULT_SUPABASE_PROJECT_ID}.supabase.co`;
 export const DEFAULT_SUPABASE_KEY = 'sb_publishable_Rpydb7voi4Ent3T2exz8qQ_TsaaTtH4';
 
-export const SUPABASE_URL =
-  process.env.SUPABASE_URL ||
-  process.env.VITE_SUPABASE_URL ||
-  DEFAULT_SUPABASE_URL;
+function cleanUrl(val?: string): string {
+  if (!val) return '';
+  let u = val.trim();
+  while (u.endsWith('/')) {
+    u = u.slice(0, -1);
+  }
+  const idx = u.indexOf('/rest/v1');
+  if (idx !== -1) {
+    u = u.substring(0, idx);
+  }
+  return u;
+}
 
-export const SUPABASE_KEY =
+export const SUPABASE_URL = cleanUrl(process.env.SUPABASE_URL) || cleanUrl(process.env.VITE_SUPABASE_URL) || DEFAULT_SUPABASE_URL;
+
+export const SUPABASE_KEY = (
   process.env.SUPABASE_ANON_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY ||
   process.env.SUPABASE_KEY ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  DEFAULT_SUPABASE_KEY;
+  DEFAULT_SUPABASE_KEY
+).trim();
 
 export const SUPABASE_PROJECT_ID =
   SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || DEFAULT_SUPABASE_PROJECT_ID;
@@ -24,6 +35,7 @@ let supabaseClient: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
+    console.log();
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
         persistSession: false,
