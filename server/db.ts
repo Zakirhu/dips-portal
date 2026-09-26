@@ -581,17 +581,71 @@ const defaultSessions: AcademicSession[] = [
 const defaultUsers: (User & { passwordHash: string })[] = [
   // Super Admin: DIPS Begowal Central Directorate
   {
-    id: 'user-admin',
+    id: 'user-admin-begowal',
     username: 'dipsbegowal@gmail.com',
     email: 'dipsbegowal@gmail.com',
     fullName: 'DIPS Begowal Administration',
     role: 'admin',
     branchId: 'branch-begowal',
-    branchName: 'DIPS Begowal',
+    branchName: 'DIPS School, Begowal (Kapurthala)',
     isActive: true,
     createdAt: '2026-09-19T00:00:00.000Z',
     phone: '+91 1822 245100',
     passwordHash: hashPassword('dips@1630502'),
+  },
+  // Demo Teacher 1: Begowal Campus | Password: Teacher@123
+  {
+    id: 'user-teacher-begowal',
+    username: 'teacher.begowal@dips.edu',
+    email: 'teacher.begowal@dips.edu',
+    fullName: 'Harpreet Kaur (Maths Faculty)',
+    role: 'teacher',
+    branchId: 'branch-begowal',
+    branchName: 'DIPS School, Begowal (Kapurthala)',
+    employeeId: 'TCH-BEG-01',
+    designation: 'Senior Mathematics Teacher',
+    assignedSubjectIds: ['sub-math'],
+    assignedClassIds: ['class-7', 'class-8', 'class-9'],
+    phone: '+91 98140 12345',
+    isActive: true,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    passwordHash: hashPassword('Teacher@123'),
+  },
+  // Demo Teacher 2: Urban Estate Jalandhar | Password: Teacher@123
+  {
+    id: 'user-teacher-jalandhar',
+    username: 'teacher.jalandhar@dips.edu',
+    email: 'teacher.jalandhar@dips.edu',
+    fullName: 'Gurpreet Singh (Science Faculty)',
+    role: 'teacher',
+    branchId: 'branch-urban-estate',
+    branchName: 'DIPS School, Urban Estate Phase-1',
+    employeeId: 'TCH-JAL-02',
+    designation: 'Head of Science Department',
+    assignedSubjectIds: ['sub-sci', 'sub-cs-sr'],
+    assignedClassIds: ['class-7', 'class-8', 'class-10'],
+    phone: '+91 98141 54321',
+    isActive: true,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    passwordHash: hashPassword('Teacher@123'),
+  },
+  // Demo Teacher 3: Suranussi Campus | Password: Teacher@123
+  {
+    id: 'user-teacher-suranussi',
+    username: 'teacher.suranussi@dips.edu',
+    email: 'teacher.suranussi@dips.edu',
+    fullName: 'Bela Kapoor (English Faculty)',
+    role: 'teacher',
+    branchId: 'branch-suranussi',
+    branchName: 'DIPS School, Suranussi',
+    employeeId: 'TCH-SUR-03',
+    designation: 'Senior English Lecturer',
+    assignedSubjectIds: ['sub-eng-core', 'sub-eng-pp'],
+    assignedClassIds: ['class-9', 'class-10', 'class-11', 'class-12'],
+    phone: '+91 181 2671200',
+    isActive: true,
+    createdAt: '2026-09-19T00:00:00.000Z',
+    passwordHash: hashPassword('Teacher@123'),
   },
 ];
 
@@ -1016,6 +1070,22 @@ class Database {
         if (!parsed.announcements || parsed.announcements.length === 0) {
           parsed.announcements = defaultAnnouncements;
         }
+        // Ensure default admin & faculty teachers exist in users list
+        if (!parsed.users) {
+          parsed.users = defaultUsers;
+        } else {
+          for (const defU of defaultUsers) {
+            const hasUser = parsed.users.some(
+              (u: any) =>
+                u.id === defU.id ||
+                u.username?.toLowerCase() === defU.username?.toLowerCase() ||
+                u.email?.toLowerCase() === defU.email?.toLowerCase()
+            );
+            if (!hasUser) {
+              parsed.users.push(defU);
+            }
+          }
+        }
         this.saveData(parsed);
         return parsed;
       } catch (err) {
@@ -1056,7 +1126,12 @@ class Database {
 
   // --- Auth & Users ---
   public findUserById(id: string): (User & { passwordHash: string }) | undefined {
-    return this.data.users.find((u) => u.id === id);
+    return this.data.users.find(
+      (u) =>
+        u.id === id ||
+        (id === 'user-admin' && u.id === 'user-admin-begowal') ||
+        (id === 'user-admin-begowal' && u.id === 'user-admin')
+    );
   }
 
   public findUserByLogin(identifier: string): (User & { passwordHash: string }) | undefined {

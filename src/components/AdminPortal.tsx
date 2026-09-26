@@ -318,10 +318,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setSyncingSupabase(true);
     try {
       const res = await api.syncSupabase();
-      showToast(res.message);
+      const usersSuccess = res.results?.users?.successful ?? 0;
+      const resSuccess = res.results?.resources?.successful ?? 0;
+      const userErr = res.results?.users?.error;
+
+      if (userErr) {
+        showToast(`Synced: ${usersSuccess} users, ${resSuccess} resources. Note: ${userErr}`);
+      } else {
+        showToast(`Supabase sync successful! ${usersSuccess} user accounts & ${resSuccess} resources synced to Supabase.`);
+      }
       handleTestSupabase();
+      loadAllData();
     } catch (e: any) {
-      alert(`Supabase sync error: ${e.message}`);
+      showToast(`Supabase sync note: ${e.message}`);
     } finally {
       setSyncingSupabase(false);
     }
@@ -835,21 +844,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden group">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
+            <button
+              type="button"
+              onClick={handleSyncSupabase}
+              disabled={syncingSupabase}
+              title="Click to sync all users, files and records to Supabase Cloud Database"
+              className="p-5 rounded-2xl bg-white border border-blue-200/80 hover:border-blue-400 shadow-xs hover:shadow-md transition-all relative overflow-hidden group text-left cursor-pointer"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 group-hover:bg-blue-600 transition-colors" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Storage</span>
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <HardDrive className="w-4 h-4" />
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  Storage
+                  <span className="px-1.5 py-0.2 text-[9px] font-bold bg-blue-100 text-blue-700 rounded-full">Cloud</span>
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <RefreshCw className={"w-4 h-4 " + (syncingSupabase ? "animate-spin" : "")} />
                 </div>
               </div>
               <div className="mt-3">
                 <span className="text-3xl font-black text-slate-900 tracking-tight">
                   {(stats.storageUsageBytes / (1024 * 1024)).toFixed(1)} <span className="text-sm font-semibold text-slate-500">MB</span>
                 </span>
-                <span className="text-[11px] text-slate-500 block mt-1 font-medium">Cloud file repository</span>
+                <span className="text-[11px] text-blue-600 block mt-1 font-semibold group-hover:underline flex items-center gap-1">
+                  {syncingSupabase ? 'Syncing to Supabase...' : 'Click to Sync to Supabase →'}
+                </span>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Pending Approval Banner if any */}
@@ -1107,6 +1127,31 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <Plus className="w-3.5 h-3.5" /> Register Teacher
               </button>
             </div>
+          </div>
+
+          {/* Supabase Storage & Login Credentials Explanation Card */}
+          <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start gap-2.5">
+              <Database className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-indigo-950">Where are teacher logins in Supabase?</span>
+                <p className="text-slate-600 mt-0.5">
+                  In your Supabase project dashboard, open <strong className="text-indigo-900">Table Editor</strong> (spreadsheet icon on left) ➡️ select the <strong className="text-indigo-900">users</strong> table. All faculty accounts are stored here with role <code className="bg-indigo-100/80 px-1 py-0.5 rounded font-mono text-[11px] text-indigo-800">teacher</code>.
+                </p>
+                <p className="text-slate-500 text-[11px] mt-1">
+                  🔑 <strong>How Teachers Log In:</strong> Teachers use their <strong>Employee ID</strong> (e.g. <span className="font-mono text-slate-700">TCH-BEG-01</span>) or <strong>Email address</strong> with their password (<span className="font-mono text-slate-700">Teacher@123</span> by default).
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSyncSupabase}
+              disabled={syncingSupabase}
+              className="shrink-0 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingSupabase ? 'animate-spin' : ''}`} />
+              <span>{syncingSupabase ? 'Syncing...' : 'Verify Cloud Sync'}</span>
+            </button>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">

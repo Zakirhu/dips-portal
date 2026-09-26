@@ -1,11 +1,23 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const SUPABASE_PROJECT_ID = 'rqqjqflxbtfcrbywwtpc';
-export const DEFAULT_SUPABASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+export const DEFAULT_SUPABASE_PROJECT_ID = 'rqqjqflxbtfcrbywwtpc';
+export const DEFAULT_SUPABASE_URL = `https://${DEFAULT_SUPABASE_PROJECT_ID}.supabase.co`;
 export const DEFAULT_SUPABASE_KEY = 'sb_publishable_Rpydb7voi4Ent3T2exz8qQ_TsaaTtH4';
 
-export const SUPABASE_URL = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
-export const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_KEY;
+export const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  DEFAULT_SUPABASE_URL;
+
+export const SUPABASE_KEY =
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  DEFAULT_SUPABASE_KEY;
+
+export const SUPABASE_PROJECT_ID =
+  SUPABASE_URL.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || DEFAULT_SUPABASE_PROJECT_ID;
 
 // Create lazy/singleton Supabase client instance
 let supabaseClient: SupabaseClient | null = null;
@@ -404,16 +416,25 @@ export async function syncUserToSupabase(user: any, passwordHash?: string) {
       payload.is_active = user.isActive !== false;
     }
 
-    const { error } = await client.from('users').upsert(payload, { onConflict: 'id' });
+    // Attempt upsert with conflict handling on username first (handles schema seed rows)
+    let { error } = await client.from('users').upsert(payload, { onConflict: 'username' });
+    if (error) {
+      // Retry with onConflict: 'id'
+      const retryId = await client.from('users').upsert(payload, { onConflict: 'id' });
+      error = retryId.error;
+    }
     if (error) {
       console.warn(`[Supabase Sync] User primary upsert notice: ${error.message}`);
       // Fallback: If column mismatch (like class_name or is_active), strip them and retry
       delete payload.class_name;
       delete payload.is_active;
-      const retry = await client.from('users').upsert(payload, { onConflict: 'id' });
-      if (retry.error) {
-        console.error(`[Supabase Sync] User retry upsert error: ${retry.error.message}`);
-        return { success: false, error: retry.error.message };
+      const retryUser = await client.from('users').upsert(payload, { onConflict: 'username' });
+      if (retryUser.error) {
+        const retryFinal = await client.from('users').upsert(payload, { onConflict: 'id' });
+        if (retryFinal.error) {
+          console.error(`[Supabase Sync] User retry upsert error: ${retryFinal.error.message}`);
+          return { success: false, error: retryFinal.error.message };
+        }
       }
     }
     console.log(`[Supabase Sync] User ${user.email} (${user.id}) successfully synced to Supabase.`);

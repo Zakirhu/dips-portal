@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { db, verifyPassword } from '../db.js';
 import { generateToken, authMiddleware, AuthenticatedRequest } from '../auth.js';
-import { syncUserToSupabase, syncActivityLogToSupabase } from '../supabase.js';
+import { syncUserToSupabase, syncActivityLogToSupabase, getSupabaseClient } from '../supabase.js';
 
 export const authRouter = Router();
 
@@ -126,7 +126,28 @@ authRouter.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Username/ID and password are required.' });
   }
 
-  const user = db.findUserByLogin(username);
+  let user = db.findUserByLogin(username);
+
+  // If user not in local memory, check live Supabase database (e.g. newly registered or restored)
+  if (!user) {
+    try {
+      const client = getSupabaseClient();
+      const clean = username.trim().toLowerCase();
+      const { data, error } = await client
+        .from('users')
+        .select('*')
+        .or(`username.ilike.${clean},email.ilike.${clean},employee_id.ilike.${clean}`)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        db.mergeRemoteUsers(data);
+        user = db.findUserByLogin(username);
+      }
+    } catch (supErr) {
+      console.warn('[Supabase Live Auth] Query notice:', supErr);
+    }
+  }
+
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials. User not found.' });
   }

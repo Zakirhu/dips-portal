@@ -1057,6 +1057,82 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   </div>
                 </div>
 
+                {/* One-Click Quick Credentials Helper */}
+                <div className="pt-1 pb-1">
+                  <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center justify-between">
+                    <span>Quick Test Login ({selectedRole === 'teacher' ? 'Faculty' : selectedRole === 'admin' ? 'Admin' : 'Student'}):</span>
+                    <span className="text-[10px] text-indigo-400">Click to fill</span>
+                  </div>
+                  {selectedRole === 'teacher' && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUsername('teacher.begowal@dips.edu');
+                          setPassword('Teacher@123');
+                          setError('');
+                        }}
+                        className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <div className="font-semibold text-white">Harpreet Kaur (Begowal)</div>
+                          <div className="text-[10px] text-slate-400 font-mono">teacher.begowal@dips.edu • TCH-BEG-01</div>
+                        </div>
+                        <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">Teacher@123</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUsername('teacher.jalandhar@dips.edu');
+                          setPassword('Teacher@123');
+                          setError('');
+                        }}
+                        className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <div className="font-semibold text-white">Gurpreet Singh (Jalandhar)</div>
+                          <div className="text-[10px] text-slate-400 font-mono">teacher.jalandhar@dips.edu • TCH-JAL-02</div>
+                        </div>
+                        <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">Teacher@123</span>
+                      </button>
+                    </div>
+                  )}
+                  {selectedRole === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsername('dipsbegowal@gmail.com');
+                        setPassword('dips@1630502');
+                        setError('');
+                      }}
+                      className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
+                    >
+                      <div>
+                        <div className="font-semibold text-white">DIPS Central Directorate</div>
+                        <div className="text-[10px] text-slate-400 font-mono">dipsbegowal@gmail.com</div>
+                      </div>
+                      <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40">dips@1630502</span>
+                    </button>
+                  )}
+                  {selectedRole === 'student' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsername('student');
+                        setPassword('student123');
+                        setError('');
+                      }}
+                      className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
+                    >
+                      <div>
+                        <div className="font-semibold text-white">Demo Student Account</div>
+                        <div className="text-[10px] text-slate-400 font-mono">student</div>
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">student123</span>
+                    </button>
+                  )}
+                </div>
+
                 {/* Login Action Button */}
                 <button
                   type="submit"

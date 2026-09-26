@@ -9,6 +9,7 @@ import {
   SUPABASE_KEY,
   SUPABASE_SQL_SCHEMA,
   getSupabaseClient,
+  syncUserToSupabase,
 } from '../supabase.js';
 
 export const supabaseRouter = Router();
@@ -159,31 +160,26 @@ supabaseRouter.post('/sync', async (req, res) => {
     // 5. Sync Users (Admin, Teachers, Students)
     const users = db.getRawData().users;
     try {
-      const payload = users.map((u) => ({
-        id: u.id,
-        username: u.username,
-        email: u.email,
-        full_name: u.fullName,
-        role: u.role,
-        branch_id: u.branchId || null,
-        branch_name: u.branchName || null,
-        phone: u.phone || null,
-        employee_id: u.employeeId || null,
-        admission_no: u.admissionNo || null,
-        designation: u.designation || null,
-        class_id: u.classId || null,
-        class_name: u.className || null,
-        section: u.section || null,
-        assigned_subject_ids: u.assignedSubjectIds || [],
-        assigned_class_ids: u.assignedClassIds || [],
-        is_active: u.isActive !== false,
-        password_hash: u.passwordHash || null,
-      }));
-      const { error } = await client.from('users').upsert(payload);
+      let userSuccess = 0;
+      const userErrors: string[] = [];
+
+      for (const u of users) {
+        try {
+          const syncRes = await syncUserToSupabase(u);
+          if (syncRes.success) {
+            userSuccess++;
+          } else {
+            userErrors.push(`${u.username || u.id}: ${syncRes.error}`);
+          }
+        } catch (uErr: any) {
+          userErrors.push(`${u.username || u.id}: ${uErr.message}`);
+        }
+      }
+
       results['users'] = {
         attempted: users.length,
-        successful: error ? 0 : users.length,
-        error: error?.message,
+        successful: userSuccess,
+        error: userErrors.length > 0 ? userErrors.slice(0, 3).join('; ') : undefined,
       };
     } catch (e: any) {
       results['users'] = { attempted: users.length, successful: 0, error: e.message };
