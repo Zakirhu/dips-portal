@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { syncActivityLogToSupabase } from './supabase.js';
 import type {
   User,
   UserRole,
@@ -1186,6 +1187,8 @@ class Database {
         assignedSubjectIds: r.assigned_subject_ids || r.assignedSubjectIds || [],
         assignedClassIds: r.assigned_class_ids || r.assignedClassIds || [],
         isActive: r.is_active !== undefined ? r.is_active : true,
+        twoFactorEnabled: r.two_factor_enabled !== undefined ? !!r.two_factor_enabled : (idx !== -1 ? this.data.users[idx].twoFactorEnabled : false),
+        twoFactorSecret: r.two_factor_secret || (idx !== -1 ? this.data.users[idx].twoFactorSecret : undefined),
         createdAt: r.created_at || new Date().toISOString(),
         passwordHash: r.password_hash || r.passwordHash || '',
       };
@@ -1534,11 +1537,22 @@ class Database {
       timestamp: new Date().toISOString(),
     };
     this.data.activityLogs.unshift(entry);
-    // Keep max 500 logs
+    // Keep max 500 logs locally
     if (this.data.activityLogs.length > 500) {
       this.data.activityLogs = this.data.activityLogs.slice(0, 500);
     }
     this.persist();
+
+    // Asynchronously stream audit log to Supabase 'logs' and 'activity_logs' tables
+    try {
+      syncActivityLogToSupabase(entry).catch((err) => {
+        // Non-blocking background log sync
+        console.warn('[Audit Log] Supabase sync warning:', err?.message || err);
+      });
+    } catch (e) {
+      // safe fallback
+    }
+
     return entry;
   }
 

@@ -128,6 +128,15 @@ resourceRouter.get('/', authMiddleware, (req: AuthenticatedRequest, res) => {
     resources = resources.filter((r) => r.uploadedByUserId === user.id || r.lastUpdatedByUserId === user.id);
   }
 
+  // Cross-Teacher & Cross-Branch Visibility:
+  // For teachers, all published materials from any branch/colleague are visible,
+  // plus their own materials even if currently pending.
+  if (user.role === 'teacher' || user.role === 'coordinator') {
+    if (!status || status === 'all') {
+      resources = resources.filter((r) => r.status === 'published' || r.uploadedByUserId === user.id || r.lastUpdatedByUserId === user.id);
+    }
+  }
+
   // Query parameter filters
   if (subjectId && subjectId !== 'all') {
     resources = resources.filter((r) => r.subjectId === subjectId);

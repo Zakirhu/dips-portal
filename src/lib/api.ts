@@ -1,4 +1,5 @@
 import type {
+  ActiveSession,
   User,
   Branch,
   AcademicClass,
@@ -65,6 +66,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     try {
       const errorData = await response.json();
       if (errorData.error) errorMsg = errorData.error;
+      if (response.status === 401 && errorData.sessionTerminated) {
+        window.dispatchEvent(new CustomEvent('dips_session_terminated', { detail: { message: errorMsg } }));
+      }
     } catch {
       // fallback
     }
@@ -101,7 +105,7 @@ export const api = {
   getCurrentUser: () => request<{ user: User }>('/api/auth/me'),
 
   get2FASetup: () =>
-    request<{ secret: string; otpauthUrl: string; enabled: boolean }>('/api/auth/2fa/setup'),
+    request<{ secret: string; otpauthUrl: string; qrCodeDataUrl?: string; enabled: boolean; role?: string }>('/api/auth/2fa/setup'),
   verify2FA: (data: { secret: string; token: string }) =>
     request<{ success: boolean; message: string }>('/api/auth/2fa/verify', {
       method: 'POST',

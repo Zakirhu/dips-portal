@@ -235,7 +235,7 @@ export interface ActivityLog {
   userName: string;
   userRole: UserRole;
   branchName: string;
-  action: 'UPLOAD' | 'UPDATE' | 'DOWNLOAD' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RESTORE' | 'LOGIN' | 'RATE';
+  action: 'UPLOAD' | 'UPDATE' | 'DOWNLOAD' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RESTORE' | 'LOGIN' | 'RATE' | 'PERMISSION_CHANGE';
   resourceTitle?: string;
   subjectName?: string;
   details: string;
@@ -265,4 +265,21 @@ export interface AdminStats {
   activeUsersCount: number;
   recentlyUploaded: Resource[];
   recentlyUpdated: Resource[];
+}
+
+export interface ActiveSession {
+  id: string; // sessionId / token identifier
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userRole: UserRole;
+  branchName?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  deviceType: 'Desktop' | 'Mobile' | 'Tablet' | 'Unknown';
+  browser: string;
+  os: string;
+  createdAt: string;
+  lastActiveAt: string;
+  isCurrentSession?: boolean;
 }

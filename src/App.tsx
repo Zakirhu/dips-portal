@@ -76,12 +76,21 @@ export default function App() {
       }, INACTIVITY_TIMEOUT_MS);
     };
 
+    const handleSessionRevoked = (e: any) => {
+      clearStoredAuth();
+      setCurrentUser(null);
+      setActiveNavTab('home');
+      alert(e.detail?.message || 'Your session has been terminated by the administrator. Please log in again.');
+    };
+    window.addEventListener('dips_session_terminated', handleSessionRevoked);
+
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
     events.forEach((ev) => window.addEventListener(ev, resetTimer, { passive: true }));
     resetTimer();
 
     return () => {
       clearTimeout(timeoutId);
+      window.removeEventListener('dips_session_terminated', handleSessionRevoked);
       events.forEach((ev) => window.removeEventListener(ev, resetTimer));
     };
   }, [currentUser]);

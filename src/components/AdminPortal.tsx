@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound,
+import { KeyRound, Laptop, Smartphone, Tablet, Radio, Power, ShieldAlert, LogOut, Globe, Clock, ShieldCheck,
   LayoutDashboard,
   Building2,
   Users,
@@ -44,6 +44,7 @@ import type {
   ActivityLog,
   AdminStats,
   SystemSettings,
+  ActiveSession,
 } from '../types.js';
 import { api } from '../lib/api.js';
 
@@ -69,6 +70,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     | 'approvals'
     | 'announcements'
     | 'activity_logs'
+    | 'sessions'
     | 'settings'
   >('dashboard');
 
@@ -82,6 +84,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+  // Active Sessions Management
+  const [activeSessionsList, setActiveSessionsList] = useState<ActiveSession[]>([]);
+  const [sessionSearch, setSessionSearch] = useState('');
+  const [sessionRoleFilter, setSessionRoleFilter] = useState<'all' | string>('all');
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [terminatingSessionId, setTerminatingSessionId] = useState<string | null>(null);
   // Admin Credentials change form state
   const [adminCreds, setAdminCreds] = useState({
     newUsername: '',
@@ -92,7 +100,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   });
   const [updatingCreds, setUpdatingCreds] = useState(false);
   // Two-Factor Authentication Management
-  const [twoFactorData, setTwoFactorData] = useState<{ secret: string; otpauthUrl: string; enabled: boolean } | null>(null);
+  const [twoFactorData, setTwoFactorData] = useState<{ secret: string; otpauthUrl: string; qrCodeDataUrl?: string; enabled: boolean } | null>(null);
   const [twoFactorVerifyToken, setTwoFactorVerifyToken] = useState('');
   const [twoFactorDisablePassword, setTwoFactorDisablePassword] = useState('');
   const [loading2FA, setLoading2FA] = useState(false);
@@ -223,6 +231,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         logsRes,
         settingsRes,
         supabaseRes,
+        sessionsRes,
       ] = await Promise.all([
         api.getAdminStats(),
         api.getBranches(),
@@ -235,6 +244,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         api.getActivityLogs(),
         api.getSettings(),
         api.getSupabaseStatus().catch(() => null),
+        api.getActiveSessions().catch(() => ({ sessions: [] })),
       ]);
 
       setStats(statsRes.stats);
@@ -250,10 +260,63 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       if (supabaseRes) {
         setSupabaseStatus(supabaseRes);
       }
+      if (sessionsRes?.sessions) {
+        setActiveSessionsList(sessionsRes.sessions);
+      }
     } catch (err: any) {
       console.error('Failed to load admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+    const loadSessions = async () => {
+    try {
+      setLoadingSessions(true);
+      const res = await api.getActiveSessions();
+      setActiveSessionsList(res.sessions || []);
+    } catch (err: any) {
+      showToast('Error loading active sessions: ' + err.message);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  const handleTerminateSession = async (sessionId: string, userName: string, isCurrent?: boolean) => {
+    const confirmMsg = isCurrent
+      ? 'WARNING: You are terminating your own current session! You will be immediately logged out. Continue?'
+      : `Are you sure you want to remotely terminate and log out the session for ${userName}?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setTerminatingSessionId(sessionId);
+      const res = await api.terminateSession(sessionId);
+      showToast(res.message);
+      if (res.isCurrent) {
+        window.location.reload();
+        return;
+      }
+      loadSessions();
+    } catch (err: any) {
+      showToast('Failed to terminate session: ' + err.message);
+    } finally {
+      setTerminatingSessionId(null);
+    }
+  };
+
+  const handleTerminateAllUserSessions = async (userId: string, userName: string) => {
+    if (!window.confirm(`Terminate ALL active sessions for ${userName}? This will log them out from all phones, laptops, and tablets.`)) return;
+
+    try {
+      setLoadingSessions(true);
+      const res = await api.terminateUserSessions(userId);
+      showToast(res.message);
+      loadSessions();
+    } catch (err: any) {
+      showToast('Failed to revoke user sessions: ' + err.message);
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
@@ -618,6 +681,88 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   };
 
   // Settings Actions
+    // Admin Credentials Update
+  const handleUpdateAdminCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminCreds.currentPassword) {
+      showToast('Current password is required to save new credentials.');
+      return;
+    }
+    if (adminCreds.newPassword && adminCreds.newPassword !== adminCreds.confirmPassword) {
+      showToast('New passwords do not match.');
+      return;
+    }
+    try {
+      setUpdatingCreds(true);
+      const res = await api.updateCredentials({
+        currentPassword: adminCreds.currentPassword,
+        newUsername: adminCreds.newUsername || undefined,
+        newEmail: adminCreds.newEmail || undefined,
+        newPassword: adminCreds.newPassword || undefined,
+      });
+      showToast(res.message || 'Admin credentials updated successfully!');
+      setAdminCreds({
+        newUsername: '',
+        newEmail: '',
+        newPassword: '',
+        confirmPassword: '',
+        currentPassword: '',
+      });
+      loadAllData();
+    } catch (err: any) {
+      showToast('Update failed: ' + err.message);
+    } finally {
+      setUpdatingCreds(false);
+    }
+  };
+
+  // Two-Factor Authentication Handlers
+  const load2FASetup = async () => {
+    try {
+      setLoading2FA(true);
+      const data = await api.setup2FA();
+      setTwoFactorData(data);
+    } catch (err: any) {
+      showToast('Failed to initialize 2FA setup: ' + err.message);
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleEnable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorData || !twoFactorVerifyToken) return;
+    try {
+      setLoading2FA(true);
+      const res = await api.verify2FA(twoFactorData.secret, twoFactorVerifyToken);
+      showToast(res.message);
+      setTwoFactorVerifyToken('');
+      setTwoFactorData((prev) => (prev ? { ...prev, enabled: true } : null));
+      loadAllData();
+    } catch (err: any) {
+      showToast('Verification failed: ' + err.message);
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorDisablePassword) return;
+    try {
+      setLoading2FA(true);
+      const res = await api.disable2FA(twoFactorDisablePassword);
+      showToast(res.message);
+      setTwoFactorDisablePassword('');
+      setTwoFactorData((prev) => (prev ? { ...prev, enabled: false } : null));
+      loadAllData();
+    } catch (err: any) {
+      showToast('Failed to disable 2FA: ' + err.message);
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
   const handleToggleDirectPublishing = async (direct: boolean) => {
     try {
       await api.updateSettings({ directPublishing: direct });
@@ -776,6 +921,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           },
           { id: 'announcements', label: 'Announcements', icon: Megaphone },
           { id: 'activity_logs', label: 'Activity Logs', icon: History },
+          { id: 'sessions', label: `Active Sessions (${activeSessionsList.length})`, icon: Radio },
           { id: 'settings', label: 'Portal Settings', icon: Settings },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -883,6 +1029,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   {syncingSupabase ? 'Syncing to Supabase...' : 'Click to Sync to Supabase →'}
                 </span>
               </div>
+            </button>
+          </div>
+
+          {/* Live Active Sessions Status Banner */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-indigo-900/60">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-400 shrink-0">
+                <Radio className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-white">
+                    {activeSessionsList.length} Active User Session{activeSessionsList.length === 1 ? '' : 's'} Online
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Live Monitoring Active
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Track active teachers, students, and staff logins in real time with remote session termination and security lockdown.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('sessions')}
+              className="px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Manage Sessions →</span>
             </button>
           </div>
 
@@ -2084,6 +2260,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           className={`px-2 py-0.5 text-[10px] font-bold rounded-md font-mono ${
                             log.action === 'UPLOAD'
                               ? 'bg-indigo-100 text-indigo-800'
+                              : log.action === 'LOGIN'
+                              ? 'bg-sky-100 text-sky-800'
+                              : log.action === 'PERMISSION_CHANGE'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
                               : log.action === 'UPDATE'
                               ? 'bg-blue-100 text-blue-800'
                               : log.action === 'DOWNLOAD'
@@ -2108,6 +2288,220 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       )}
 
       {/* 10. SETTINGS */}
+      
+      {/* MANAGE ACTIVE SESSIONS TAB */}
+      {activeTab === 'sessions' && (
+        <div className="space-y-4">
+          {/* Header & Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600">
+                <Radio className="w-5 h-5 animate-pulse text-emerald-500" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-slate-900">Manage Active User Sessions</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    {activeSessionsList.length} Connected
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Real-time monitor of live authenticated teachers, students, and administrators with remote instant revocation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadSessions}
+                disabled={loadingSessions}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingSessions ? 'animate-spin' : ''}`} />
+                <span>Refresh Sessions</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3.5 rounded-xl border border-slate-200 text-xs">
+            <div className="sm:col-span-2 relative">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by user name, email, IP address, branch, or browser..."
+                value={sessionSearch}
+                onChange={(e) => setSessionSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+            <div>
+              <select
+                value={sessionRoleFilter}
+                onChange={(e) => setSessionRoleFilter(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
+              >
+                <option value="all">All Roles (Teachers, Admins, Students)</option>
+                <option value="admin">Super Admins</option>
+                <option value="teacher">Faculty / Teachers</option>
+                <option value="coordinator">Subject Coordinators</option>
+                <option value="student">Students</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Active Sessions Feed / Cards */}
+          {(() => {
+            const filteredSessions = activeSessionsList.filter((s) => {
+              if (sessionRoleFilter !== 'all' && s.userRole !== sessionRoleFilter) return false;
+              if (sessionSearch) {
+                const q = sessionSearch.toLowerCase();
+                const matched =
+                  s.userName?.toLowerCase().includes(q) ||
+                  s.userEmail?.toLowerCase().includes(q) ||
+                  s.ipAddress?.toLowerCase().includes(q) ||
+                  s.branchName?.toLowerCase().includes(q) ||
+                  s.browser?.toLowerCase().includes(q) ||
+                  s.os?.toLowerCase().includes(q);
+                if (!matched) return false;
+              }
+              return true;
+            });
+
+            if (filteredSessions.length === 0) {
+              return (
+                <div className="p-12 text-center bg-white rounded-xl border border-slate-200 text-slate-500 space-y-2">
+                  <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto" />
+                  <p className="text-sm font-bold text-slate-700">No active sessions matching criteria</p>
+                  <p className="text-xs text-slate-400">Try changing role filter or refreshing active connections.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                  Active Connections ({filteredSessions.length})
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filteredSessions.map((session) => {
+                    const isTerminating = terminatingSessionId === session.id;
+                    const DeviceIcon =
+                      session.deviceType === 'Mobile'
+                        ? Smartphone
+                        : session.deviceType === 'Tablet'
+                        ? Tablet
+                        : Laptop;
+
+                    return (
+                      <div
+                        key={session.id}
+                        className={`p-4 rounded-xl border transition-all relative flex flex-col justify-between gap-3 ${
+                          session.isCurrentSession
+                            ? 'bg-gradient-to-br from-indigo-50/60 via-white to-slate-50 border-indigo-300 shadow-xs ring-1 ring-indigo-500/20'
+                            : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                        }`}
+                      >
+                        {/* Top row */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className="p-2 rounded-lg bg-slate-100 text-slate-700 shrink-0">
+                              <DeviceIcon className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-xs font-bold text-slate-900 truncate">
+                                  {session.userName}
+                                </h4>
+                                <span
+                                  className={`px-1.5 py-0.2 rounded text-[10px] font-bold capitalize ${
+                                    session.userRole === 'admin'
+                                      ? 'bg-indigo-100 text-indigo-700'
+                                      : session.userRole === 'teacher'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-blue-100 text-blue-700'
+                                  }`}
+                                >
+                                  {session.userRole}
+                                </span>
+                                {session.isCurrentSession && (
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-500 text-white">
+                                    Current Device
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 truncate">
+                                {session.userEmail || session.branchName || 'DIPS Begowal Campus'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Terminate button */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleTerminateSession(session.id, session.userName, session.isCurrentSession)
+                              }
+                              disabled={isTerminating}
+                              title="Remotely revoke and terminate this session"
+                              className="px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg flex items-center gap-1 transition-all cursor-pointer"
+                            >
+                              <LogOut className="w-3 h-3" />
+                              <span>{isTerminating ? 'Revoking...' : 'Terminate'}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Session Metadata details */}
+                        <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Globe className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate font-mono">IP: {session.ipAddress || '127.0.0.1'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <DeviceIcon className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate">{session.browser} ({session.os})</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Clock className="w-3 h-3 text-emerald-500 shrink-0" />
+                            <span className="truncate">
+                              Active: {new Date(session.lastActiveAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate">
+                              Started: {new Date(session.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Quick User-level action */}
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                          <span className="font-mono truncate text-[9px]">ID: {session.id.substring(0, 16)}...</span>
+                          <button
+                            type="button"
+                            onClick={() => handleTerminateAllUserSessions(session.userId, session.userName)}
+                            className="text-rose-500 hover:text-rose-700 hover:underline cursor-pointer font-semibold"
+                          >
+                            Terminate all devices for this user
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+
       {activeTab === 'settings' && settings && (
         <div className="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
           <div>
@@ -2292,13 +2686,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
                 {!twoFactorData.enabled ? (
                   <form onSubmit={handleEnable2FA} className="space-y-3 bg-white p-4 rounded-xl border border-slate-200">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-slate-900">Step 1: Add key to your Authenticator App</p>
-                      <p className="text-[11px] text-slate-500">
-                        Open Google Authenticator, Microsoft Authenticator, or 1Password, choose <b>Add Account</b>, and enter this secret key:
-                      </p>
-                      <div className="p-2.5 rounded-lg bg-slate-900 text-emerald-400 font-mono text-center tracking-widest font-bold text-sm select-all">
-                        {twoFactorData.secret}
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        {twoFactorData.qrCodeDataUrl ? (
+                          <div className="bg-white p-2 rounded-xl shadow-xs border border-slate-200 shrink-0 text-center">
+                            <img
+                              src={twoFactorData.qrCodeDataUrl}
+                              alt="Scan 2FA QR Code"
+                              className="w-36 h-36 object-contain rounded-lg mx-auto"
+                            />
+                            <span className="text-[10px] text-slate-500 font-bold block mt-1">Scan in Authenticator App</span>
+                          </div>
+                        ) : null}
+                        <div className="space-y-2 text-left flex-1 min-w-0">
+                          <p className="font-bold text-slate-900 text-xs">
+                            Step 1: Scan QR Code or manually enter secret key
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            Open <b>Google Authenticator</b>, <b>Microsoft Authenticator</b>, <b>Authy</b>, or <b>Apple Keychain</b> on your phone.
+                          </p>
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Manual Entry Secret:</span>
+                            <div className="p-2.5 rounded-lg bg-slate-900 text-emerald-400 font-mono text-center tracking-widest font-bold text-xs select-all break-all">
+                              {twoFactorData.secret}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

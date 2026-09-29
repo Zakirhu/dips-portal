@@ -19,6 +19,9 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
+  KeyRound,
+  Smartphone,
+  Lock,
   CheckCircle,
   X,
   RotateCcw,
@@ -199,6 +202,8 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [viewAllSubjects, setViewAllSubjects] = useState<boolean>(true);
   const [resources, setResources] = useState<Resource[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [teacherStats, setTeacherStats] = useState<any>(null);
@@ -246,6 +251,18 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
+  // Two-Factor Authentication (2FA) State for Teachers
+  const [twoFactorData, setTwoFactorData] = useState<{
+    secret: string;
+    otpauthUrl: string;
+    qrCodeDataUrl?: string;
+    enabled: boolean;
+  } | null>(null);
+  const [twoFactorVerifyToken, setTwoFactorVerifyToken] = useState('');
+  const [twoFactorDisablePassword, setTwoFactorDisablePassword] = useState('');
+  const [loading2FA, setLoading2FA] = useState(false);
+  const [twoFactorMsg, setTwoFactorMsg] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMsg, setPasswordMsg] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -352,12 +369,13 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [subsRes, clsRes, resRes, ancRes, statsRes] = await Promise.all([
+      const [subsRes, clsRes, resRes, ancRes, statsRes, branchRes] = await Promise.all([
         api.getSubjects(),
         api.getClasses(),
         api.getResources(),
         api.getAnnouncements(),
         api.getTeacherStats(),
+        api.getBranches(),
       ]);
 
       setSubjects(subsRes.subjects);
@@ -365,13 +383,11 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
       setResources(resRes.resources);
       setAnnouncements(ancRes.announcements);
       setTeacherStats(statsRes);
+      setBranches(branchRes.branches || []);
 
-      // Default select first assigned subject
-      const assigned = subsRes.subjects.filter((s) =>
-        currentUser.assignedSubjectIds?.includes(s.id)
-      );
-      if (assigned.length > 0 && !selectedSubjectId) {
-        setSelectedSubjectId(assigned[0].id);
+      // Default to 'all' so teachers immediately see content from ALL colleagues across all branches
+      if (!selectedSubjectId) {
+        setSelectedSubjectId('all');
       }
       if (clsRes.classes.length > 0 && !selectedClassId) {
         setSelectedClassId(clsRes.classes[0].id);
@@ -460,14 +476,19 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
     });
   }, [classes, classStageFilter]);
 
-  // Filter resources for current teacher's subjects across all branches
-  const accessibleResources = resources.filter((r) =>
-    currentUser.assignedSubjectIds?.includes(r.subjectId)
-  );
+  // Cross-Branch Sharing:
+  // Teachers can toggle between viewing their assigned subjects OR exploring ALL educational content across all branches & subjects
+  const accessibleResources = viewAllSubjects
+    ? resources
+    : resources.filter((r) =>
+        currentUser.assignedSubjectIds && currentUser.assignedSubjectIds.length > 0
+          ? currentUser.assignedSubjectIds.includes(r.subjectId)
+          : true
+      );
 
   // Drilldown filtered resources
   const drilldownResources = accessibleResources.filter((r) => {
-    if (selectedSubjectId && r.subjectId !== selectedSubjectId) return false;
+    if (selectedSubjectId && selectedSubjectId !== 'all' && r.subjectId !== selectedSubjectId) return false;
     if (selectedClassId && r.classId !== selectedClassId) return false;
     if (selectedCategory !== 'all' && r.category !== selectedCategory) return false;
     if (selectedBranchFilter !== 'all' && r.branchId !== selectedBranchFilter) return false;
@@ -514,6 +535,64 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
     }
     return true;
   });
+
+    const loadTeacher2FASetup = async () => {
+    try {
+      setLoading2FA(true);
+      setTwoFactorError('');
+      setTwoFactorMsg('');
+      const data = await api.setup2FA();
+      setTwoFactorData(data);
+    } catch (err: any) {
+      setTwoFactorError('Failed to load 2FA setup: ' + err.message);
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleTeacherEnable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorData || !twoFactorVerifyToken) return;
+    try {
+      setLoading2FA(true);
+      setTwoFactorError('');
+      setTwoFactorMsg('');
+      const res = await api.verify2FA(twoFactorData.secret, twoFactorVerifyToken);
+      setTwoFactorMsg(res.message || 'Two-Factor Authentication is now active!');
+      setTwoFactorVerifyToken('');
+      setTwoFactorData((prev) => (prev ? { ...prev, enabled: true } : null));
+      if (onUpdateUser) {
+        onUpdateUser({ ...currentUser, twoFactorEnabled: true });
+      }
+      showToast('Two-Factor Authentication activated for your faculty account.');
+    } catch (err: any) {
+      setTwoFactorError(err.message || 'Invalid 6-digit code. Please try again.');
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleTeacherDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorDisablePassword) return;
+    try {
+      setLoading2FA(true);
+      setTwoFactorError('');
+      setTwoFactorMsg('');
+      const res = await api.disable2FA(twoFactorDisablePassword);
+      setTwoFactorMsg(res.message || 'Two-Factor Authentication disabled.');
+      setTwoFactorDisablePassword('');
+      setTwoFactorData((prev) => (prev ? { ...prev, enabled: false } : null));
+      if (onUpdateUser) {
+        onUpdateUser({ ...currentUser, twoFactorEnabled: false });
+      }
+      showToast('2FA disabled on faculty account.');
+    } catch (err: any) {
+      setTwoFactorError(err.message || 'Failed to disable 2FA.');
+    } finally {
+      setLoading2FA(false);
+    }
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -622,7 +701,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
           { id: 'navigator', label: 'Subject Curriculum Explorer', icon: BookOpen },
           {
             id: 'library',
-            label: `All Shared Subject Content (${accessibleResources.length})`,
+            label: `Cross-Branch Shared Library (${accessibleResources.length})`,
             icon: FolderGit2,
           },
           {
@@ -1048,7 +1127,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Cross-Branch Shared Library ({assignedSubjects.map((s) => s.name).join(', ')})
+                Cross-Branch Shared Library ({accessibleResources.length} Resources)
               </h3>
               <p className="text-xs text-slate-500">
                 Full repository of teaching materials uploaded by subject colleagues across all DIPS schools
@@ -1072,7 +1151,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
                 <span>Search & Filter Materials</span>
-                {(searchQuery || selectedClassId || selectedCategory !== 'all') && (
+                {(searchQuery || selectedSubjectId !== 'all' || selectedClassId || selectedCategory !== 'all' || selectedBranchFilter !== 'all') && (
                   <span className="w-2 h-2 rounded-full bg-indigo-600" />
                 )}
               </div>
@@ -1088,7 +1167,7 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
           <div
             className={`${
               mobileFiltersOpen ? 'block' : 'hidden'
-            } md:block p-3.5 bg-white rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs`}
+            } md:block p-3.5 bg-white rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs`}
           >
             <div>
               <label className="block text-[11px] font-semibold text-slate-500 mb-1">Search Term</label>
@@ -1108,9 +1187,28 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                 onChange={(e) => setSelectedSubjectId(e.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
               >
-                {assignedSubjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
+                <option value="all">All Subjects (Cross-Curriculum)</option>
+                {subjects.map((s) => {
+                  const isAssigned = currentUser.assignedSubjectIds?.includes(s.id);
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {isAssigned ? '★ (My Subject)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Branch / Campus</label>
+              <select
+                value={selectedBranchFilter}
+                onChange={(e) => setSelectedBranchFilter(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white cursor-pointer"
+              >
+                <option value="all">All DIPS Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
                   </option>
                 ))}
               </select>
@@ -1155,6 +1253,8 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                     setSearchQuery('');
                     setSelectedClassId('');
                     setSelectedCategory('all');
+                    setSelectedSubjectId('all');
+                    setSelectedBranchFilter('all');
                   }}
                   className="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer"
                 >
@@ -2134,8 +2234,10 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
               </form>
             </div>
 
-            {/* Change Password Card (1 column) */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 self-start">
+            {/* Right Column: Password & Two-Factor Security */}
+            <div className="space-y-6 self-start">
+              {/* Change Password Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
               <h4 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">Change Account Password</h4>
               {passwordMsg && (
                 <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200">
@@ -2175,6 +2277,150 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                   Update Password
                 </button>
               </form>
+            </div>
+
+            {/* Two-Factor Authentication (2FA) for Faculty */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 self-start">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Two-Factor Authentication (2FA)</h4>
+                    <span className="text-[11px] text-slate-500 block">Authenticator App Verification</span>
+                  </div>
+                </div>
+
+                {!twoFactorData && (
+                  <button
+                    type="button"
+                    onClick={loadTeacher2FASetup}
+                    disabled={loading2FA}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer shrink-0"
+                  >
+                    {loading2FA ? 'Loading...' : 'Configure 2FA'}
+                  </button>
+                )}
+              </div>
+
+              {twoFactorMsg && (
+                <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-200 font-medium flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{twoFactorMsg}</span>
+                </div>
+              )}
+
+              {twoFactorError && (
+                <div className="p-3 bg-rose-50 text-rose-800 text-xs rounded-lg border border-rose-200 font-medium flex items-center gap-1.5">
+                  <X className="w-3.5 h-3.5 shrink-0" />
+                  <span>{twoFactorError}</span>
+                </div>
+              )}
+
+              <div className="text-xs space-y-3">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        (twoFactorData ? twoFactorData.enabled : currentUser.twoFactorEnabled)
+                          ? 'bg-emerald-500 animate-pulse'
+                          : 'bg-slate-300'
+                      }`}
+                    />
+                    <span className="font-bold text-slate-800">
+                      Status:{' '}
+                      {(twoFactorData ? twoFactorData.enabled : currentUser.twoFactorEnabled)
+                        ? 'Enforced & Protected'
+                        : 'Not Activated'}
+                    </span>
+                  </div>
+                  {(twoFactorData ? twoFactorData.enabled : currentUser.twoFactorEnabled) && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                {twoFactorData && !twoFactorData.enabled && (
+                  <form onSubmit={handleTeacherEnable2FA} className="space-y-3 pt-1">
+                    {twoFactorData.qrCodeDataUrl && (
+                      <div className="text-center p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <img
+                          src={twoFactorData.qrCodeDataUrl}
+                          alt="2FA QR Code"
+                          className="w-36 h-36 mx-auto rounded-lg shadow-2xs bg-white p-1"
+                        />
+                        <p className="text-[11px] font-semibold text-slate-600">
+                          Scan this QR Code with Google Authenticator, Microsoft Authenticator, or Apple Passwords.
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                        Manual Secret Key:
+                      </span>
+                      <div className="p-2.5 rounded-lg bg-slate-900 text-indigo-300 font-mono text-center tracking-widest font-bold text-xs select-all break-all">
+                        {twoFactorData.secret}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                      <label className="block font-semibold text-slate-700 text-xs">
+                        Enter 6-Digit Code from Authenticator:
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={twoFactorVerifyToken}
+                          onChange={(e) => setTwoFactorVerifyToken(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="000000"
+                          className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-center tracking-widest font-mono font-bold text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={loading2FA}
+                          className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {loading2FA ? 'Verifying...' : 'Activate 2FA'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+
+                {(twoFactorData ? twoFactorData.enabled : currentUser.twoFactorEnabled) && (
+                  <form onSubmit={handleTeacherDisable2FA} className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/40 space-y-2.5 mt-2">
+                    <p className="text-[11px] font-bold text-rose-900">
+                      Disable Two-Factor Authentication
+                    </p>
+                    <p className="text-[10px] text-rose-700">
+                      Enter your current faculty password to remove the authenticator requirement.
+                    </p>
+                    <div className="space-y-2">
+                      <input
+                        type="password"
+                        value={twoFactorDisablePassword}
+                        onChange={(e) => setTwoFactorDisablePassword(e.target.value)}
+                        placeholder="Current password"
+                        required
+                        className="w-full px-3 py-1.5 border border-rose-200 rounded-lg text-xs bg-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading2FA}
+                        className="w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {loading2FA ? 'Disabling...' : 'Confirm Disable 2FA'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
             </div>
           </div>
         </div>

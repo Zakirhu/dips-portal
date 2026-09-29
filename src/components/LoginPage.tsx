@@ -1073,24 +1073,50 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
                 {/* 2FA Authenticator Code Input */}
                 {requires2FA && (
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
-                      <KeyRound className="w-4 h-4" />
-                      <span>Two-Factor Authentication Required</span>
+                  <div className="p-4 rounded-xl bg-amber-500/15 border border-amber-500/40 space-y-3 animate-fadeIn ring-1 ring-amber-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                        <KeyRound className="w-4 h-4 animate-bounce" />
+                        <span>Two-Factor Security Verification</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        TOTP Enforced
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-300">
-                      Enter the 6-digit code from your Google Authenticator or Microsoft Authenticator app.
+                      Enter the 6-digit time-based code from Google Authenticator, Microsoft Authenticator, Authy, or Apple Passwords.
                     </p>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={twoFactorCode}
-                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="123456"
-                      autoFocus
-                      className="w-full py-2.5 px-3 text-center tracking-widest text-lg font-mono font-bold bg-slate-900 border border-amber-500/50 rounded-xl text-amber-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-                      required
-                    />
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        value={twoFactorCode}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setTwoFactorCode(val);
+                        }}
+                        placeholder="000000"
+                        autoFocus
+                        className="w-full py-3 px-3 text-center tracking-[0.35em] text-2xl font-mono font-black bg-slate-950 border border-amber-500/60 rounded-xl text-amber-300 placeholder-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        required
+                      />
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                        <span>Updates every 30 seconds</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRequires2FA(false);
+                            setTwoFactorCode('');
+                            setError('');
+                          }}
+                          className="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer"
+                        >
+                          Cancel / Back
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 

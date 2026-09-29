@@ -157,7 +157,21 @@ CREATE TABLE IF NOT EXISTS public.announcements (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Activity Logs Table
+-- 6. Security Audit Logs Table ('logs')
+CREATE TABLE IF NOT EXISTS public.logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  user_name TEXT,
+  user_role TEXT,
+  branch_name TEXT,
+  action TEXT NOT NULL,
+  details TEXT,
+  ip_address TEXT,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Legacy Activity Logs Table ('activity_logs')
 CREATE TABLE IF NOT EXISTS public.activity_logs (
   id TEXT PRIMARY KEY,
   user_id TEXT,
@@ -167,7 +181,8 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
   action TEXT NOT NULL,
   details TEXT,
   ip_address TEXT,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Enable Row Level Security (RLS) and grant read access for anon
@@ -177,6 +192,7 @@ ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon read branches" ON public.branches FOR SELECT USING (true);
@@ -185,6 +201,7 @@ CREATE POLICY "Allow anon read subjects" ON public.subjects FOR SELECT USING (tr
 CREATE POLICY "Allow anon read users" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Allow anon read resources" ON public.resources FOR SELECT USING (true);
 CREATE POLICY "Allow anon read announcements" ON public.announcements FOR SELECT USING (true);
+CREATE POLICY "Allow anon read logs" ON public.logs FOR SELECT USING (true);
 CREATE POLICY "Allow anon read activity_logs" ON public.activity_logs FOR SELECT USING (true);
 
 -- Allow authenticated/anon insert/update for demo portal
@@ -193,6 +210,7 @@ CREATE POLICY "Allow anon update users" ON public.users FOR UPDATE USING (true);
 CREATE POLICY "Allow anon insert resources" ON public.resources FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon update resources" ON public.resources FOR UPDATE USING (true);
 CREATE POLICY "Allow anon insert announcements" ON public.announcements FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon insert logs" ON public.logs FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon insert activity_logs" ON public.activity_logs FOR INSERT WITH CHECK (true);
 
 -- 7. Supabase Storage: Public bucket for resources
@@ -265,7 +283,7 @@ export async function checkSupabaseHealth(): Promise<{
 
   try {
     const client = getSupabaseClient();
-    const tableNames = ['branches', 'resources', 'classes', 'subjects', 'announcements', 'activity_logs'];
+    const tableNames = ['branches', 'resources', 'classes', 'subjects', 'announcements', 'activity_logs', 'logs'];
 
     // Test first table to determine connectivity and auth status
     const probe = await client.from('branches').select('count', { count: 'exact', head: true });
@@ -435,6 +453,8 @@ export async function syncUserToSupabase(user: any, passwordHash?: string) {
       class_name: user.className || user.class_name || null,
       assigned_subject_ids: user.assignedSubjectIds || [],
       assigned_class_ids: user.assignedClassIds || [],
+      two_factor_enabled: !!user.twoFactorEnabled,
+      two_factor_secret: user.twoFactorSecret || null,
     };
 
     let { error } = await client.from('users').upsert(fullPayload, { onConflict: 'id' });
@@ -485,18 +505,27 @@ export async function loadUsersFromSupabase(): Promise<any[]> {
 export async function syncActivityLogToSupabase(log: any) {
   try {
     const client = getSupabaseClient();
-    const { error } = await client.from('activity_logs').upsert({
-      id: log.id,
-      user_id: log.userId,
-      user_name: log.userName,
-      user_role: log.userRole,
-      branch_name: log.branchName,
+    const payload = {
+      id: log.id || ('log-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)),
+      user_id: log.userId || null,
+      user_name: log.userName || 'System',
+      user_role: log.userRole || 'system',
+      branch_name: log.branchName || null,
       action: log.action,
-      details: log.details,
+      details: log.details || '',
       ip_address: log.ipAddress || '',
-    });
-    if (error) {
-      return { success: false, error: error.message };
+      timestamp: log.timestamp || new Date().toISOString(),
+      created_at: log.timestamp || new Date().toISOString(),
+    };
+
+    // Primary target: 'logs' table (for security audit monitoring)
+    const logsRes = await client.from('logs').upsert(payload, { onConflict: 'id' });
+    
+    // Also mirror to 'activity_logs' table if present
+    const actRes = await client.from('activity_logs').upsert(payload, { onConflict: 'id' });
+
+    if (logsRes.error && actRes.error) {
+      return { success: false, error: logsRes.error.message || actRes.error.message };
     }
     return { success: true };
   } catch (err: any) {

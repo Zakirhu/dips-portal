@@ -125,13 +125,14 @@ userRouter.put('/teachers/:id', authMiddleware, requireAdmin, async (req: Authen
     role: role ?? teacher.role,
   });
 
+  const isRoleOrPermChanged = (role && role !== teacher.role) || (typeof isActive === 'boolean' && isActive !== teacher.isActive) || assignedSubjectIds !== undefined || assignedClassIds !== undefined;
   db.logActivity({
     userId: req.user!.id,
     userName: req.user!.fullName,
     userRole: req.user!.role,
     branchName: 'Central Admin',
-    action: 'UPDATE',
-    details: `Updated teacher profile & assignments for ${teacher.fullName}.`,
+    action: isRoleOrPermChanged ? 'PERMISSION_CHANGE' : 'UPDATE',
+    details: `Updated teacher permissions & assignments for ${teacher.fullName} (Role: ${role ?? teacher.role}, Status: ${(typeof isActive === 'boolean' ? isActive : teacher.isActive) ? 'Active' : 'Inactive'}).`,
   });
 
   const { passwordHash: _, ...safe } = updated!;
@@ -385,8 +386,8 @@ userRouter.post('/:id/toggle-status', authMiddleware, requireAdmin, async (req: 
     userName: req.user!.fullName,
     userRole: req.user!.role,
     branchName: 'Central Admin',
-    action: 'UPDATE',
-    details: `${updated?.isActive ? 'Activated' : 'Deactivated'} account for ${user.fullName}.`,
+    action: 'PERMISSION_CHANGE',
+    details: `${updated?.isActive ? 'Granted login access (Activated)' : 'Revoked login access (Deactivated)'} for ${user.fullName} (${user.role}).`,
   });
 
   return res.json({ success: true, isActive: updated?.isActive });

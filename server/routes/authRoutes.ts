@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import * as otplib from 'otplib';
+import qrcode from 'qrcode';
 import rateLimit from 'express-rate-limit';
 
 // Strict rate limiter for authentication routes to prevent brute-force attacks
@@ -19,7 +21,7 @@ const registrationLimiter = rateLimit({
 });
 import crypto from 'crypto';
 import { db, verifyPassword, hashPassword } from '../db.js';
-import { generateToken, authMiddleware, AuthenticatedRequest } from '../auth.js';
+import { generateToken, authMiddleware, AuthenticatedRequest, requireAdmin, getActiveSessionsList, terminateSession, terminateAllUserSessions } from '../auth.js';
 import { syncUserToSupabase, syncActivityLogToSupabase, getSupabaseClient } from '../supabase.js';
 
 export const authRouter = Router();
@@ -180,12 +182,76 @@ authRouter.post('/register-teacher', registrationLimiter, async (req, res) => {
   });
 
   const { passwordHash: _, ...safeUser } = newTeacher;
-  const token = generateToken(safeUser);
+  const token = generateToken(safeUser, req);
 
   return res.status(201).json({
     token,
     user: safeUser,
     message: 'Faculty account registered successfully! You can now access your teacher workspace or log in anytime using your Employee ID or Email.',
+  });
+});
+
+
+// GET /api/auth/active-sessions - List all current active logged-in sessions across the institution
+authRouter.get('/active-sessions', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+  const currentSessionId = req.sessionId;
+  const sessions = getActiveSessionsList(currentSessionId);
+  return res.json({ sessions });
+});
+
+// POST /api/auth/active-sessions/:sessionId/terminate - Remotely revoke / log out a specific session
+authRouter.post('/active-sessions/:sessionId/terminate', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+  const targetSessionId = req.params.sessionId;
+  if (!targetSessionId) {
+    return res.status(400).json({ error: 'Session ID is required.' });
+  }
+
+  // Prevent admin from accidentally locking themselves out through this single endpoint without confirmation
+  const isCurrent = targetSessionId === req.sessionId;
+  const success = terminateSession(targetSessionId);
+
+  if (!success) {
+    return res.status(404).json({ error: 'Session not found or already terminated.' });
+  }
+
+  db.logActivity({
+    userId: req.user!.id,
+    userName: req.user!.fullName,
+    userRole: req.user!.role,
+    branchName: req.user!.branchName || 'DIPS Central',
+    action: 'DELETE',
+    details: 'Administrator remotely terminated active session ' + targetSessionId + (isCurrent ? ' (Self current session)' : ''),
+    ipAddress: req.ip,
+  });
+
+  return res.json({
+    success: true,
+    message: isCurrent
+      ? 'Your current session was terminated. You will be logged out.'
+      : 'User session has been revoked and terminated successfully.',
+    isCurrent,
+  });
+});
+
+// POST /api/auth/active-sessions/terminate-user/:userId - Terminate all sessions for a specific user
+authRouter.post('/active-sessions/terminate-user/:userId', authMiddleware, requireAdmin, (req: AuthenticatedRequest, res) => {
+  const { userId } = req.params;
+  const count = terminateAllUserSessions(userId);
+
+  db.logActivity({
+    userId: req.user!.id,
+    userName: req.user!.fullName,
+    userRole: req.user!.role,
+    branchName: req.user!.branchName || 'DIPS Central',
+    action: 'DELETE',
+    details: 'Administrator terminated all active sessions (' + count + ' sessions) for user ID ' + userId,
+    ipAddress: req.ip,
+  });
+
+  return res.json({
+    success: true,
+    message: 'Terminated ' + count + ' active session(s) for the selected user.',
+    count,
   });
 });
 
@@ -252,7 +318,7 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
   }
 
   const { passwordHash, ...safeUser } = user;
-  const token = generateToken(safeUser);
+  const token = generateToken(safeUser, req);
 
   const logEntry = {
     userId: user.id,
@@ -303,15 +369,39 @@ authRouter.get('/me', authMiddleware, (req: AuthenticatedRequest, res) => {
   return res.json({ user: enrichedUser });
 });
 
-// GET /api/auth/2fa/setup - Generate a secret for Authenticator apps
-authRouter.get('/2fa/setup', authMiddleware, (req: AuthenticatedRequest, res) => {
+// GET /api/auth/2fa/setup - Generate TOTP secret and QR code for Authenticator apps (Google / MS / Apple Authenticator)
+authRouter.get('/2fa/setup', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const secret = generateBase32Key(16);
-  const otpauthUrl = 'otpauth://totp/DIPS%20Portal:' + encodeURIComponent(user.email || user.username) + '?secret=' + secret + '&issuer=DIPS%20Institutions&digits=6&period=30';
+  const secret = otplib.generateSecret();
+  const label = encodeURIComponent(user.email || user.username || user.fullName);
+  const issuer = encodeURIComponent('DIPS Educational Institutions');
+  const otpauthUrl = `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}&digits=6&period=30`;
+
+  let qrCodeDataUrl = '';
+  try {
+    qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl, {
+      width: 240,
+      margin: 2,
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff',
+      },
+    });
+  } catch (qrErr) {
+    console.warn('Failed to generate 2FA QR code:', qrErr);
+  }
+
   res.json({
     secret,
     otpauthUrl,
+    qrCodeDataUrl,
     enabled: !!user.twoFactorEnabled,
+    role: user.role,
+    user: {
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    },
   });
 });
 
@@ -341,8 +431,8 @@ authRouter.post('/2fa/verify', authMiddleware, async (req: AuthenticatedRequest,
     userName: req.user!.fullName,
     userRole: req.user!.role,
     branchName: req.user!.branchName || 'DIPS Central',
-    action: 'LOGIN',
-    details: 'Enabled Two-Factor Authentication (2FA) on account.',
+    action: 'PERMISSION_CHANGE',
+    details: 'Enabled Two-Factor Authentication (TOTP 2FA) on account.',
     ipAddress: req.ip,
   });
   return res.json({
@@ -376,7 +466,7 @@ authRouter.post('/2fa/disable', authMiddleware, async (req: AuthenticatedRequest
     userName: req.user!.fullName,
     userRole: req.user!.role,
     branchName: req.user!.branchName || 'DIPS Central',
-    action: 'LOGIN',
+    action: 'PERMISSION_CHANGE',
     details: 'Disabled Two-Factor Authentication (2FA) on account.',
     ipAddress: req.ip,
   });
@@ -434,7 +524,7 @@ authRouter.post('/change-credentials', authMiddleware, async (req: Authenticated
     console.warn('[Supabase Credentials Sync Notice]:', supErr);
   }
   const { passwordHash: _, ...safeUser } = updatedUser;
-  const newToken = generateToken(safeUser);
+  const newToken = generateToken(safeUser, req);
   return res.json({
     success: true,
     message: 'Admin credentials updated successfully!',
