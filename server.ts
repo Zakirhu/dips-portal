@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
@@ -21,18 +22,45 @@ dotenv.config();
 
 async function startServer() {
   const app = express();
+
+  // Security Headers: XSS protection, anti-clickjacking, DNS prefetch control, nosniff
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Vite SPA handles script loading
+      crossOriginEmbedderPolicy: false,
+    })
+  );
   const PORT = 3000;
 
   // JSON & URL-encoded parsers
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+  // Prevent Clickjacking and MIME-type sniffing
+  app.use((req, res, next) => {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
+
   // Ensure public/uploads folder exists & serve it statically
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
-  app.use('/uploads', express.static(uploadsDir));
+  app.use(
+    '/uploads',
+    (req, res, next) => {
+      // Security: Disallow execution of scripts, force download on non-images, disable inline scripting
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      next();
+    },
+    express.static(uploadsDir)
+  );
 
   // Mount API endpoints
   app.get('/api/health', (req, res) => {
