@@ -55,6 +55,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
 
   // Branch showcase interactive state
   const [branchSearch, setBranchSearch] = useState('');
@@ -110,6 +112,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setSuccessMsg('');
     setUsername('');
     setPassword('');
+    setRequires2FA(false);
+    setTwoFactorCode('');
   }, [selectedRole]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -123,13 +127,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       setLoading(true);
       setError('');
       setSuccessMsg('');
-      const res = await api.login({
+      const res: any = await api.login({
         username,
         password,
         expectedRole: selectedRole,
+        twoFactorCode: requires2FA ? twoFactorCode : undefined,
       });
-      setStoredAuth(res.token, res.user);
-      onLoginSuccess(res.user);
+
+      if (res.requires2FA) {
+        setRequires2FA(true);
+        setSuccessMsg('2FA Active: Please enter the 6-digit code from your Authenticator app.');
+        return;
+      }
+
+      if (res.token && res.user) {
+        setStoredAuth(res.token, res.user);
+        onLoginSuccess(res.user);
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please verify your credentials.');
     } finally {
@@ -1057,81 +1071,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   </div>
                 </div>
 
-                {/* One-Click Quick Credentials Helper */}
-                <div className="pt-1 pb-1">
-                  <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center justify-between">
-                    <span>Quick Test Login ({selectedRole === 'teacher' ? 'Faculty' : selectedRole === 'admin' ? 'Admin' : 'Student'}):</span>
-                    <span className="text-[10px] text-indigo-400">Click to fill</span>
-                  </div>
-                  {selectedRole === 'teacher' && (
-                    <div className="space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUsername('teacher.begowal@dips.edu');
-                          setPassword('Teacher@123');
-                          setError('');
-                        }}
-                        className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
-                      >
-                        <div>
-                          <div className="font-semibold text-white">Harpreet Kaur (Begowal)</div>
-                          <div className="text-[10px] text-slate-400 font-mono">teacher.begowal@dips.edu • TCH-BEG-01</div>
-                        </div>
-                        <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">Teacher@123</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUsername('teacher.jalandhar@dips.edu');
-                          setPassword('Teacher@123');
-                          setError('');
-                        }}
-                        className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
-                      >
-                        <div>
-                          <div className="font-semibold text-white">Gurpreet Singh (Jalandhar)</div>
-                          <div className="text-[10px] text-slate-400 font-mono">teacher.jalandhar@dips.edu • TCH-JAL-02</div>
-                        </div>
-                        <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/40">Teacher@123</span>
-                      </button>
+                {/* 2FA Authenticator Code Input */}
+                {requires2FA && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2 animate-fadeIn">
+                    <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                      <KeyRound className="w-4 h-4" />
+                      <span>Two-Factor Authentication Required</span>
                     </div>
-                  )}
-                  {selectedRole === 'admin' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUsername('dipsbegowal@gmail.com');
-                        setPassword('dips@1630502');
-                        setError('');
-                      }}
-                      className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
-                    >
-                      <div>
-                        <div className="font-semibold text-white">DIPS Central Directorate</div>
-                        <div className="text-[10px] text-slate-400 font-mono">dipsbegowal@gmail.com</div>
-                      </div>
-                      <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/40">dips@1630502</span>
-                    </button>
-                  )}
-                  {selectedRole === 'student' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUsername('student');
-                        setPassword('student123');
-                        setError('');
-                      }}
-                      className="w-full text-left p-2 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs flex items-center justify-between cursor-pointer"
-                    >
-                      <div>
-                        <div className="font-semibold text-white">Demo Student Account</div>
-                        <div className="text-[10px] text-slate-400 font-mono">student</div>
-                      </div>
-                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">student123</span>
-                    </button>
-                  )}
-                </div>
+                    <p className="text-[11px] text-slate-300">
+                      Enter the 6-digit code from your Google Authenticator or Microsoft Authenticator app.
+                    </p>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="123456"
+                      autoFocus
+                      className="w-full py-2.5 px-3 text-center tracking-widest text-lg font-mono font-bold bg-slate-900 border border-amber-500/50 rounded-xl text-amber-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                      required
+                    />
+                  </div>
+                )}
 
                 {/* Login Action Button */}
                 <button

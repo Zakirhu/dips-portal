@@ -114,6 +114,14 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- 5. Resources / Learning Materials Table
+-- Ensure users table has all optional helper columns
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS class_name TEXT;
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS assigned_subject_ids TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS assigned_class_ids TEXT[] DEFAULT ARRAY[]::TEXT[];
+
+-- 5. Resources / Learning Materials Table
 CREATE TABLE IF NOT EXISTS public.resources (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -401,65 +409,68 @@ export async function loadResourcesFromSupabase(): Promise<any[]> {
 export async function syncUserToSupabase(user: any, passwordHash?: string) {
   try {
     const client = getSupabaseClient();
-    const payload: any = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      full_name: user.fullName,
-      role: user.role,
-      branch_id: user.branchId || null,
-      branch_name: user.branchName || null,
+    
+    // Core columns that exist in the standard users table schema
+    const basePayload: any = {
+      id: user.id || ('user-' + Math.random().toString(36).substring(2, 9)),
+      username: (user.username || user.employeeId || user.email || user.id).trim(),
+      email: (user.email || user.username || '').trim(),
+      full_name: user.fullName || user.full_name || 'Faculty Member',
+      role: user.role || 'teacher',
+      branch_id: user.branchId || user.branch_id || null,
+      branch_name: user.branchName || user.branch_name || null,
       phone: user.phone || null,
-      employee_id: user.employeeId || null,
-      admission_no: user.admissionNo || null,
+      employee_id: user.employeeId || user.employee_id || null,
+      admission_no: user.admissionNo || user.admission_no || null,
       designation: user.designation || null,
-      class_id: user.classId || null,
+      class_id: user.classId || user.class_id || null,
       section: user.section || null,
-      assigned_subject_ids: user.assignedSubjectIds || [],
-      assigned_class_ids: user.assignedClassIds || [],
-      status: user.isActive !== false ? 'active' : 'inactive',
+      is_active: user.isActive !== false,
       password_hash: passwordHash || user.passwordHash || null,
     };
 
-    if (user.className) {
-      payload.class_name = user.className;
-    }
-    if (user.isActive !== undefined) {
-      payload.is_active = user.isActive !== false;
-    }
+    // Attempt 1: Try with full payload
+    const fullPayload = {
+      ...basePayload,
+      class_name: user.className || user.class_name || null,
+      assigned_subject_ids: user.assignedSubjectIds || [],
+      assigned_class_ids: user.assignedClassIds || [],
+    };
 
-    // Attempt upsert with conflict handling on username first (handles schema seed rows)
-    let { error } = await client.from('users').upsert(payload, { onConflict: 'username' });
-    if (error) {
-      // Retry with onConflict: 'id'
-      const retryId = await client.from('users').upsert(payload, { onConflict: 'id' });
-      error = retryId.error;
-    }
-    if (error) {
-      console.warn(`[Supabase Sync] User primary upsert notice: ${error.message}`);
-      // Fallback: If column mismatch (like class_name or is_active), strip them and retry
-      delete payload.class_name;
-      delete payload.is_active;
-      const retryUser = await client.from('users').upsert(payload, { onConflict: 'username' });
-      if (retryUser.error) {
-        const retryFinal = await client.from('users').upsert(payload, { onConflict: 'id' });
-        if (retryFinal.error) {
-          console.error(`[Supabase Sync] User retry upsert error: ${retryFinal.error.message}`);
-          return { success: false, error: retryFinal.error.message };
-        }
-      }
-    }
-    console.log(`[Supabase Sync] User ${user.email} (${user.id}) successfully synced to Supabase.`);
-    return { success: true };
+    let { error } = await client.from('users').upsert(fullPayload, { onConflict: 'id' });
+    if (!error) return { success: true };
+
+    // If 'status' was expected or missing, or column cache error, try clean base payload
+    let retry = await client.from('users').upsert(basePayload, { onConflict: 'id' });
+    if (!retry.error) return { success: true };
+
+    // If 'is_active' doesn't exist, try minimal fields
+    const minimalPayload: any = {
+      id: basePayload.id,
+      username: basePayload.username,
+      email: basePayload.email,
+      full_name: basePayload.full_name,
+      role: basePayload.role,
+      password_hash: basePayload.password_hash,
+    };
+    if (basePayload.employee_id) minimalPayload.employee_id = basePayload.employee_id;
+    if (basePayload.admission_no) minimalPayload.admission_no = basePayload.admission_no;
+
+    const minRetry = await client.from('users').upsert(minimalPayload, { onConflict: 'id' });
+    if (!minRetry.error) return { success: true };
+
+    // If onConflict 'id' had issue, try onConflict 'username'
+    const userConflictRetry = await client.from('users').upsert(minimalPayload, { onConflict: 'username' });
+    if (!userConflictRetry.error) return { success: true };
+
+    console.warn('[Supabase Sync User Notice]:', userConflictRetry.error.message);
+    return { success: false, error: userConflictRetry.error.message };
   } catch (err: any) {
-    console.error('[Supabase Sync] User sync exception:', err);
+    console.error('[Supabase Sync Exception]:', err);
     return { success: false, error: err?.message };
   }
 }
 
-/**
- * Loads registered users from Supabase PostgreSQL
- */
 export async function loadUsersFromSupabase(): Promise<any[]> {
   try {
     const client = getSupabaseClient();

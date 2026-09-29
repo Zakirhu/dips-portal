@@ -33,12 +33,20 @@ export interface DatabaseSchema {
   settings: SystemSettings;
 }
 
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+import bcrypt from 'bcryptjs';
+
+export function hashPassword(password: string): string {
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+  if (!hash) return false;
+  if (hash.startsWith('$2a$') || hash.startsWith('$2b$')) {
+    return bcrypt.compareSync(password, hash);
+  }
+  const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
+  return sha256Hash === hash;
 }
 
 const defaultBranches: Branch[] = [
@@ -1547,3 +1555,4 @@ class Database {
 }
 
 export const db = new Database();
+

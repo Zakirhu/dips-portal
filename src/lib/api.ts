@@ -100,6 +100,23 @@ export const api = {
 
   getCurrentUser: () => request<{ user: User }>('/api/auth/me'),
 
+  get2FASetup: () =>
+    request<{ secret: string; otpauthUrl: string; enabled: boolean }>('/api/auth/2fa/setup'),
+  verify2FA: (data: { secret: string; token: string }) =>
+    request<{ success: boolean; message: string }>('/api/auth/2fa/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  disable2FA: (data: { currentPassword: string }) =>
+    request<{ success: boolean; message: string }>('/api/auth/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  changeCredentials: (data: { currentPassword: string; newPassword?: string; newUsername?: string; newEmail?: string }) =>
+    request<{ success: boolean; message: string; user?: User; token?: string }>('/api/auth/change-credentials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   changePassword: (passwords: { currentPassword: string; newPassword: string }) =>
     request<{ success: boolean; message: string }>('/api/auth/change-password', {
       method: 'POST',

@@ -1,3 +1,4 @@
+import { authMiddleware, requireAdmin } from '../auth.js';
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -15,7 +16,7 @@ import {
 export const supabaseRouter = Router();
 
 // GET /api/supabase/status
-supabaseRouter.get('/status', async (req, res) => {
+supabaseRouter.get('/status', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const health = await checkSupabaseHealth();
     // Mask key for safety (show first 14 chars and last 4)
@@ -50,7 +51,7 @@ supabaseRouter.get('/status', async (req, res) => {
 });
 
 // POST /api/supabase/sync - Bulk sync memory data to Supabase
-supabaseRouter.post('/sync', async (req, res) => {
+supabaseRouter.post('/sync', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const client = getSupabaseClient();
     const results: Record<string, { attempted: number; successful: number; error?: string }> = {};
@@ -162,20 +163,20 @@ supabaseRouter.post('/sync', async (req, res) => {
     try {
       let userSuccess = 0;
       const userErrors: string[] = [];
-
       for (const u of users) {
         try {
           const syncRes = await syncUserToSupabase(u);
           if (syncRes.success) {
             userSuccess++;
           } else {
-            userErrors.push(`${u.username || u.id}: ${syncRes.error}`);
+            console.error('Failed to sync user ' + (u.username || u.id) + ':', syncRes.error);
+            userErrors.push((u.username || u.id) + ': ' + syncRes.error);
           }
         } catch (uErr: any) {
-          userErrors.push(`${u.username || u.id}: ${uErr.message}`);
+          console.error('Exception syncing user ' + (u.username || u.id) + ':', uErr);
+          userErrors.push((u.username || u.id) + ': ' + uErr.message);
         }
       }
-
       results['users'] = {
         attempted: users.length,
         successful: userSuccess,
@@ -184,7 +185,6 @@ supabaseRouter.post('/sync', async (req, res) => {
     } catch (e: any) {
       results['users'] = { attempted: users.length, successful: 0, error: e.message };
     }
-
     // 6. Sync Announcements
     const announcements = db.getAnnouncements();
     try {

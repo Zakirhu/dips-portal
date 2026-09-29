@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import { db } from '../db.js';
+import { db, hashPassword } from '../db.js';
 import { authMiddleware, requireAdmin, AuthenticatedRequest } from '../auth.js';
 import { syncUserToSupabase, deleteUserFromSupabase } from '../supabase.js';
 import type { User } from '../../src/types.js';
@@ -42,7 +42,7 @@ userRouter.post('/teachers', authMiddleware, requireAdmin, async (req: Authentic
 
   const branch = db.getBranches().find((b) => b.id === branchId);
   const password = initialPassword || 'teacher123';
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  const passwordHash = hashPassword(password);
 
   const newTeacher: User & { passwordHash: string } = {
     id: 'user-tea-' + Date.now().toString().slice(-5),
@@ -208,7 +208,7 @@ userRouter.post('/students', authMiddleware, requireAdmin, async (req: Authentic
   const branch = db.getBranches().find((b) => b.id === branchId);
   const cls = db.getClasses().find((c) => c.id === classId);
   const password = initialPassword || 'student123';
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  const passwordHash = hashPassword(password);
 
   const newStudent: User & { passwordHash: string } = {
     id: 'user-stu-' + Date.now().toString().slice(-5),
@@ -339,7 +339,7 @@ userRouter.post('/:id/reset-password', authMiddleware, requireAdmin, async (req:
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const targetPassword = newPassword || (user.role === 'student' ? 'student123' : 'teacher123');
-  const newHash = crypto.createHash('sha256').update(targetPassword).digest('hex');
+  const newHash = hashPassword(targetPassword);
   const updated = db.updateUser(id, { passwordHash: newHash });
 
   // Sync to Supabase
@@ -406,12 +406,15 @@ userRouter.put('/profile', authMiddleware, async (req: AuthenticatedRequest, res
     assignedClassIds,
   } = req.body;
 
+  // Security check: Only administrators can assign or reassign academic subjects/classes.
+  // Preventing horizontal privilege escalation where teachers grant themselves access to other departments.
   const updated = db.updateUser(userId, {
     fullName: fullName !== undefined ? fullName : user.fullName,
     phone: phone !== undefined ? phone : user.phone,
     designation: designation !== undefined ? designation : user.designation,
-    assignedSubjectIds: Array.isArray(assignedSubjectIds) ? assignedSubjectIds : user.assignedSubjectIds,
-    assignedClassIds: Array.isArray(assignedClassIds) ? assignedClassIds : user.assignedClassIds,
+    // Keep existing subject/class assignments unless modified by admin via /teachers/:id
+    assignedSubjectIds: user.role === 'admin' && Array.isArray(assignedSubjectIds) ? assignedSubjectIds : user.assignedSubjectIds,
+    assignedClassIds: user.role === 'admin' && Array.isArray(assignedClassIds) ? assignedClassIds : user.assignedClassIds,
   });
 
   try {

@@ -61,6 +61,31 @@ export default function App() {
     }
   }, [currentUser?.id]);
 
+  // Inactivity Auto-Lock: automatically log out after 30 minutes of zero user activity
+  useEffect(() => {
+    if (!currentUser) return;
+    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+    let timeoutId: any;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        clearStoredAuth();
+        setCurrentUser(null);
+        setActiveNavTab('home');
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach((ev) => window.addEventListener(ev, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+    };
+  }, [currentUser]);
+
   const handleLogout = () => {
     clearStoredAuth();
     setCurrentUser(null);

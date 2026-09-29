@@ -90,6 +90,8 @@ export interface User {
   branchId: string;
   branchName?: string;
   isActive: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
   avatarUrl?: string;
   createdAt: string;
   phone?: string;

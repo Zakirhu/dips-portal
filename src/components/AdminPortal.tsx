@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
+import { KeyRound,
   LayoutDashboard,
   Building2,
   Users,
@@ -82,6 +82,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+  // Admin Credentials change form state
+  const [adminCreds, setAdminCreds] = useState({
+    newUsername: '',
+    newEmail: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [updatingCreds, setUpdatingCreds] = useState(false);
+  // Two-Factor Authentication Management
+  const [twoFactorData, setTwoFactorData] = useState<{ secret: string; otpauthUrl: string; enabled: boolean } | null>(null);
+  const [twoFactorVerifyToken, setTwoFactorVerifyToken] = useState('');
+  const [twoFactorDisablePassword, setTwoFactorDisablePassword] = useState('');
+  const [loading2FA, setLoading2FA] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState('');
 
@@ -323,7 +337,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       const userErr = res.results?.users?.error;
 
       if (userErr) {
-        showToast(`Synced: ${usersSuccess} users, ${resSuccess} resources. Note: ${userErr}`);
+        showToast(`Synced: ${usersSuccess} users, ${resSuccess} resources. (User schema note: ${userErr.substring(0, 100)})`);
       } else {
         showToast(`Supabase sync successful! ${usersSuccess} user accounts & ${resSuccess} resources synced to Supabase.`);
       }
@@ -2139,6 +2153,205 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           </div>
 
+          {/* Admin Security & Credentials Card */}
+          <div className="p-5 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/40 via-white to-slate-50 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-xs">
+                <KeyRound className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Change Super Admin Credentials</h4>
+                <p className="text-xs text-slate-500">
+                  Update your Super Admin User ID, Email, or Password securely in database & Supabase.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateAdminCredentials} className="space-y-3 pt-2 text-xs">
+              <div className="p-2.5 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-indigo-950">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-indigo-400 block">Active Admin Account</span>
+                  <span className="font-bold font-mono text-xs">{currentUser.username} ({currentUser.email})</span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-200/60 text-indigo-900">Super Admin</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New User ID / Username (Optional)</label>
+                  <input
+                    type="text"
+                    value={adminCreds.newUsername}
+                    onChange={(e) => setAdminCreds({ ...adminCreds, newUsername: e.target.value })}
+                    placeholder="e.g. director.begowal"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New Admin Email (Optional)</label>
+                  <input
+                    type="email"
+                    value={adminCreds.newEmail}
+                    onChange={(e) => setAdminCreds({ ...adminCreds, newEmail: e.target.value })}
+                    placeholder="e.g. director@dips.edu"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New Password (Optional)</label>
+                  <input
+                    type="password"
+                    value={adminCreds.newPassword}
+                    onChange={(e) => setAdminCreds({ ...adminCreds, newPassword: e.target.value })}
+                    placeholder="Min 6 characters"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={adminCreds.confirmPassword}
+                    onChange={(e) => setAdminCreds({ ...adminCreds, confirmPassword: e.target.value })}
+                    placeholder="Re-type new password"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-1 border-t border-slate-200">
+                <label className="block font-semibold text-rose-700 mb-1">
+                  Current Admin Password <span className="text-rose-500">* (Required to confirm changes)</span>
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="password"
+                    value={adminCreds.currentPassword}
+                    onChange={(e) => setAdminCreds({ ...adminCreds, currentPassword: e.target.value })}
+                    placeholder="Enter current password"
+                    required
+                    className="flex-1 px-3 py-2 border border-rose-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
+                  <button
+                    type="submit"
+                    disabled={updatingCreds}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    {updatingCreds ? 'Updating...' : 'Save New Admin Credentials'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Two-Factor Authentication (2FA) Security Card */}
+          <div className="p-5 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/40 via-white to-slate-50 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Two-Factor Authentication (2FA / Authenticator)</h4>
+                  <p className="text-xs text-slate-500">
+                    Protect the Super Admin portal using time-based one-time passcodes (TOTP RFC 6238).
+                  </p>
+                </div>
+              </div>
+              {!twoFactorData && (
+                <button
+                  type="button"
+                  onClick={load2FASetup}
+                  disabled={loading2FA}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shrink-0"
+                >
+                  {loading2FA ? 'Checking...' : 'Manage 2FA'}
+                </button>
+              )}
+            </div>
+
+            {twoFactorData && (
+              <div className="pt-2 border-t border-emerald-100 text-xs space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50/70 border border-emerald-200">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${twoFactorData.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                    <span className="font-bold text-slate-900">
+                      Status: {twoFactorData.enabled ? 'Active & Enforced' : 'Not Activated'}
+                    </span>
+                  </div>
+                  {twoFactorData.enabled && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-600 text-white">
+                      Protected
+                    </span>
+                  )}
+                </div>
+
+                {!twoFactorData.enabled ? (
+                  <form onSubmit={handleEnable2FA} className="space-y-3 bg-white p-4 rounded-xl border border-slate-200">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-slate-900">Step 1: Add key to your Authenticator App</p>
+                      <p className="text-[11px] text-slate-500">
+                        Open Google Authenticator, Microsoft Authenticator, or 1Password, choose <b>Add Account</b>, and enter this secret key:
+                      </p>
+                      <div className="p-2.5 rounded-lg bg-slate-900 text-emerald-400 font-mono text-center tracking-widest font-bold text-sm select-all">
+                        {twoFactorData.secret}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2">
+                      <label className="block font-semibold text-slate-800">
+                        Step 2: Enter 6-digit verification code from your phone
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={twoFactorVerifyToken}
+                          onChange={(e) => setTwoFactorVerifyToken(e.target.value.replace(/[^0-9]/g, ''))}
+                          placeholder="000000"
+                          className="w-36 px-3 py-2 border border-slate-300 rounded-lg text-center tracking-widest font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={loading2FA}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs transition-colors shrink-0"
+                        >
+                          {loading2FA ? 'Verifying...' : 'Verify & Activate 2FA'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleDisable2FA} className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/30 space-y-2">
+                    <div className="font-semibold text-rose-900 text-xs">Need to disable Two-Factor Authentication?</div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="password"
+                        value={twoFactorDisablePassword}
+                        onChange={(e) => setTwoFactorDisablePassword(e.target.value)}
+                        placeholder="Enter admin password to confirm"
+                        required
+                        className="flex-1 px-3 py-1.5 border border-rose-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                      />
+                      <button
+                        type="submit"
+                        disabled={loading2FA}
+                        className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors text-xs shrink-0"
+                      >
+                        {loading2FA ? 'Processing...' : 'Disable 2FA'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Supabase Cloud Backend Card */}
           <div className="p-5 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/40 via-white to-emerald-50/20 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -2159,7 +2372,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Directly linked to Supabase Project: <span className="font-mono font-semibold text-slate-700">rqqjqflxbtfcrbywwtpc</span>
+                  Directly linked to Supabase Project: <span className="font-mono font-semibold text-slate-700">bckfzqysttnotbzudcxg</span>
                 </p>
               </div>
 
@@ -2189,14 +2402,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-lg bg-white border border-slate-200 text-xs">
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Project Endpoint</span>
-                <span className="font-mono text-slate-800 text-[11px] truncate block" title="https://rqqjqflxbtfcrbywwtpc.supabase.co">
-                  rqqjqflxbtfcrbywwtpc.supabase.co
+                <span className="font-mono text-slate-800 text-[11px] truncate block" title="https://bckfzqysttnotbzudcxg.supabase.co">
+                  bckfzqysttnotbzudcxg.supabase.co
                 </span>
               </div>
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Publishable API Key</span>
                 <span className="font-mono text-slate-800 text-[11px] truncate block">
-                  {supabaseStatus?.maskedKey || 'sb_publishable_Rpydb...TtH4'}
+                  {supabaseStatus?.maskedKey || 'sb_publishable_ZRmOq3tF3x0K1kM7726A2w_vKkF3g5H'}
                 </span>
               </div>
               <div>
@@ -2226,7 +2439,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </button>
 
               <a
-                href="https://supabase.com/dashboard/project/rqqjqflxbtfcrbywwtpc"
+                href="https://supabase.com/dashboard/project/bckfzqysttnotbzudcxg"
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 underline underline-offset-2"
@@ -3037,7 +3250,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Supabase SQL Schema & DDL</h3>
                   <p className="text-[11px] text-slate-500">
-                    Project: <span className="font-mono font-semibold">rqqjqflxbtfcrbywwtpc</span>
+                    Project: <span className="font-mono font-semibold">bckfzqysttnotbzudcxg</span>
                   </p>
                 </div>
               </div>

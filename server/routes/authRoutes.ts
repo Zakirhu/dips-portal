@@ -1,30 +1,99 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+
+// Strict rate limiter for authentication routes to prevent brute-force attacks
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Max 10 attempts per IP per 15 min
+  message: { error: 'Too many login attempts from this IP. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const registrationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 15, // Max 15 registrations per IP per hour
+  message: { error: 'Too many account registrations from this IP. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 import crypto from 'crypto';
-import { db, verifyPassword } from '../db.js';
+import { db, verifyPassword, hashPassword } from '../db.js';
 import { generateToken, authMiddleware, AuthenticatedRequest } from '../auth.js';
 import { syncUserToSupabase, syncActivityLogToSupabase, getSupabaseClient } from '../supabase.js';
 
 export const authRouter = Router();
 
-// Quick login accounts list for easy testing & demo role switching
+// RFC 6238 TOTP Two-Factor Authentication implementation
+function generateBase32Key(length = 16): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let secret = '';
+  const bytes = crypto.randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    secret += chars[bytes[i] % 32];
+  }
+  return secret;
+}
+
+function getTotp(secret: string, timeOffset = 0): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  for (let i = 0; i < secret.length; i++) {
+    const val = chars.indexOf(secret.charAt(i).toUpperCase());
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const keyBytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    keyBytes.push(parseInt(bits.substr(i, 8), 2));
+  }
+  const key = Buffer.from(keyBytes);
+
+  const epoch = Math.floor(Date.now() / 1000) + timeOffset;
+  const timeStep = 30;
+  const currentCounter = Math.floor(epoch / timeStep);
+
+  const buf = Buffer.alloc(8);
+  buf.writeBigInt64BE(BigInt(currentCounter));
+  const hmac = crypto.createHmac('sha1', key).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0xf;
+  const code =
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
+  return (code % 1000000).toString().padStart(6, '0');
+}
+
+function verifyTotp(secret: string, token: string, window = 1): boolean {
+  if (!token) return false;
+  const cleanToken = token.toString().trim();
+  for (let error = -window; error <= window; error++) {
+    const expected = getTotp(secret, error * 30);
+    if (expected === cleanToken) return true;
+  }
+  return false;
+}
+
+
+// In production, disable user account harvesting endpoint
 authRouter.get('/demo-accounts', (req, res) => {
-  const users = db.getRawData().users.map((u) => ({
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Endpoint disabled in production.' });
+  }
+  // Even in development, only return non-sensitive high-level test roles
+  const users = db.getRawData().users.slice(0, 3).map((u) => ({
     id: u.id,
     username: u.username,
     role: u.role,
     fullName: u.fullName,
     branchName: u.branchName,
-    employeeId: u.employeeId,
-    admissionNo: u.admissionNo,
-    designation: u.designation,
-    className: u.className,
-    section: u.section,
   }));
   res.json({ accounts: users });
 });
 
 // Teacher Self-Registration
-authRouter.post('/register-teacher', async (req, res) => {
+authRouter.post('/register-teacher', registrationLimiter, async (req, res) => {
   const {
     fullName,
     email,
@@ -67,7 +136,7 @@ authRouter.post('/register-teacher', async (req, res) => {
   }
 
   const username = employeeId.toLowerCase().replace(/[^a-z0-9]/g, '') || cleanEmail.split('@')[0];
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  const passwordHash = hashPassword(password);
 
   const newTeacher = {
     id: 'user-tea-' + Date.now().toString().slice(-6),
@@ -120,7 +189,7 @@ authRouter.post('/register-teacher', async (req, res) => {
   });
 });
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', loginLimiter, async (req, res) => {
   const { username, password, expectedRole } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username/ID and password are required.' });
@@ -159,6 +228,20 @@ authRouter.post('/login', async (req, res) => {
   // Validate password
   if (!verifyPassword(password, user.passwordHash)) {
     return res.status(401).json({ error: 'Invalid credentials. Incorrect password.' });
+  }
+
+  // 2FA / TOTP Check: If Two-Factor Authentication is enabled on this account
+  const { twoFactorCode } = req.body;
+  if (user.twoFactorEnabled && user.twoFactorSecret) {
+    if (!twoFactorCode) {
+      return res.status(200).json({
+        requires2FA: true,
+        message: 'Two-Factor Authentication required. Please enter the 6-digit code from your Authenticator app.',
+      });
+    }
+    if (!verifyTotp(user.twoFactorSecret, twoFactorCode)) {
+      return res.status(401).json({ error: 'Invalid 2FA code. Please check your authenticator app and try again.' });
+    }
   }
 
   // If role filter is provided, ensure matches or admin
@@ -220,7 +303,147 @@ authRouter.get('/me', authMiddleware, (req: AuthenticatedRequest, res) => {
   return res.json({ user: enrichedUser });
 });
 
-authRouter.post('/change-password', authMiddleware, (req: AuthenticatedRequest, res) => {
+// GET /api/auth/2fa/setup - Generate a secret for Authenticator apps
+authRouter.get('/2fa/setup', authMiddleware, (req: AuthenticatedRequest, res) => {
+  const user = req.user!;
+  const secret = generateBase32Key(16);
+  const otpauthUrl = 'otpauth://totp/DIPS%20Portal:' + encodeURIComponent(user.email || user.username) + '?secret=' + secret + '&issuer=DIPS%20Institutions&digits=6&period=30';
+  res.json({
+    secret,
+    otpauthUrl,
+    enabled: !!user.twoFactorEnabled,
+  });
+});
+
+// POST /api/auth/2fa/verify - Verify and activate 2FA
+authRouter.post('/2fa/verify', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { secret, token } = req.body;
+  if (!secret || !token) {
+    return res.status(400).json({ error: 'Secret and 6-digit verification code are required.' });
+  }
+  if (!verifyTotp(secret, token)) {
+    return res.status(400).json({ error: 'Verification code is invalid. Please try again.' });
+  }
+  const updatedUser = db.updateUser(req.user!.id, {
+    twoFactorEnabled: true,
+    twoFactorSecret: secret,
+  });
+  if (updatedUser) {
+    try {
+      const full = db.findUserById(req.user!.id);
+      if (full) {
+        await syncUserToSupabase(full, full.passwordHash);
+      }
+    } catch {}
+  }
+  db.logActivity({
+    userId: req.user!.id,
+    userName: req.user!.fullName,
+    userRole: req.user!.role,
+    branchName: req.user!.branchName || 'DIPS Central',
+    action: 'LOGIN',
+    details: 'Enabled Two-Factor Authentication (2FA) on account.',
+    ipAddress: req.ip,
+  });
+  return res.json({
+    success: true,
+    message: 'Two-Factor Authentication is now enabled for your account!',
+  });
+});
+
+// POST /api/auth/2fa/disable - Disable 2FA with current password confirmation
+authRouter.post('/2fa/disable', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { currentPassword } = req.body;
+  if (!currentPassword) {
+    return res.status(400).json({ error: 'Current password is required to disable 2FA.' });
+  }
+  const userWithHash = db.findUserById(req.user!.id);
+  if (!userWithHash || !verifyPassword(currentPassword, userWithHash.passwordHash)) {
+    return res.status(400).json({ error: 'Current password does not match.' });
+  }
+  db.updateUser(req.user!.id, {
+    twoFactorEnabled: false,
+    twoFactorSecret: undefined,
+  });
+  try {
+    const full = db.findUserById(req.user!.id);
+    if (full) {
+      await syncUserToSupabase(full, full.passwordHash);
+    }
+  } catch {}
+  db.logActivity({
+    userId: req.user!.id,
+    userName: req.user!.fullName,
+    userRole: req.user!.role,
+    branchName: req.user!.branchName || 'DIPS Central',
+    action: 'LOGIN',
+    details: 'Disabled Two-Factor Authentication (2FA) on account.',
+    ipAddress: req.ip,
+  });
+  return res.json({
+    success: true,
+    message: 'Two-Factor Authentication has been disabled.',
+  });
+});
+
+authRouter.post('/change-credentials', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const { currentPassword, newPassword, newUsername, newEmail } = req.body;
+  if (!currentPassword) {
+    return res.status(400).json({ error: 'Current password is required to verify your authorization.' });
+  }
+  const userWithHash = db.findUserById(req.user!.id);
+  if (!userWithHash) return res.status(404).json({ error: 'User account not found.' });
+  if (!verifyPassword(currentPassword, userWithHash.passwordHash)) {
+    return res.status(400).json({ error: 'Current password does not match.' });
+  }
+  const updates: any = {};
+  let passwordHash = userWithHash.passwordHash;
+  if (newPassword && newPassword.trim()) {
+    if (newPassword.trim().length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+    passwordHash = hashPassword(newPassword.trim());
+    updates.passwordHash = passwordHash;
+  }
+  if (newUsername && newUsername.trim()) {
+    const cleanUser = newUsername.trim();
+    const existing = db.findUserByLogin(cleanUser);
+    if (existing && existing.id !== userWithHash.id) {
+      return res.status(400).json({ error: 'The User ID / Username "' + cleanUser + '" is already in use.' });
+    }
+    updates.username = cleanUser;
+  }
+  if (newEmail && newEmail.trim()) {
+    const cleanMail = newEmail.trim().toLowerCase();
+    const existing = db.findUserByLogin(cleanMail);
+    if (existing && existing.id !== userWithHash.id) {
+      return res.status(400).json({ error: 'The email "' + cleanMail + '" is already registered to another account.' });
+    }
+    updates.email = cleanMail;
+  }
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: 'Please specify a new User ID / Email or a new Password.' });
+  }
+  const updatedUser = db.updateUser(req.user!.id, updates);
+  if (!updatedUser) {
+    return res.status(500).json({ error: 'Failed to update credentials in database.' });
+  }
+  try {
+    await syncUserToSupabase(updatedUser, passwordHash);
+  } catch (supErr) {
+    console.warn('[Supabase Credentials Sync Notice]:', supErr);
+  }
+  const { passwordHash: _, ...safeUser } = updatedUser;
+  const newToken = generateToken(safeUser);
+  return res.json({
+    success: true,
+    message: 'Admin credentials updated successfully!',
+    user: safeUser,
+    token: newToken,
+  });
+});
+
+authRouter.post('/change-password', authMiddleware, async (req: AuthenticatedRequest, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ error: 'Both current and new passwords are required.' });
@@ -228,16 +451,15 @@ authRouter.post('/change-password', authMiddleware, (req: AuthenticatedRequest, 
   if (newPassword.length < 6) {
     return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
   }
-
   const userWithHash = db.findUserById(req.user!.id);
   if (!userWithHash) return res.status(404).json({ error: 'User not found' });
-
   if (!verifyPassword(currentPassword, userWithHash.passwordHash)) {
     return res.status(400).json({ error: 'Current password is incorrect.' });
   }
-
-  const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
-  db.updateUser(req.user!.id, { passwordHash: newHash });
-
+  const newHash = hashPassword(newPassword);
+  const updatedUser = db.updateUser(req.user!.id, { passwordHash: newHash });
+  if (updatedUser) {
+    try { await syncUserToSupabase(updatedUser, newHash); } catch {}
+  }
   return res.json({ success: true, message: 'Password successfully updated.' });
 });

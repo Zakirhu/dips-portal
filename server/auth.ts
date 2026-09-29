@@ -4,7 +4,9 @@ import { db } from './db.js';
 import type { User, Resource } from '../src/types.js';
 
 // Simple, fast, secure signed token using Node crypto
-const SECRET_KEY = process.env.SESSION_SECRET || 'dips-centralized-portal-secret-key-2026';
+// Auto-generate high-entropy random secret if SESSION_SECRET is not provided.
+// This prevents token forgery using hardcoded/known keys.
+const SECRET_KEY = process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex');
 
 export function generateToken(user: User): string {
   const payload = {
@@ -22,7 +24,9 @@ export function parseToken(token: string): { id: string; role: string } | null {
     const [payloadStr, sig] = token.split('.');
     if (!payloadStr || !sig) return null;
     const expectedSig = crypto.createHmac('sha256', SECRET_KEY).update(payloadStr).digest('base64url');
-    if (sig !== expectedSig) return null;
+    // Constant-time comparison to prevent timing attacks
+    if (sig.length !== expectedSig.length) return null;
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
     const payload = JSON.parse(Buffer.from(payloadStr, 'base64url').toString('utf-8'));
     if (payload.exp && Date.now() > payload.exp) return null;
     return payload;

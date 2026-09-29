@@ -35,10 +35,60 @@ const storage = multer.diskStorage({
   },
 });
 
+// Whitelist of strictly safe academic document and media extensions
+const ALLOWED_EXTENSIONS = new Set([
+  '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.mp3', '.zip', '.txt'
+]);
+
 const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    // Block executable, script, or web execution files (XSS / RCE prevention)
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return cb(new Error('File upload blocked: Only educational documents (.pdf, .docx, .pptx, .xlsx, .jpg, .png, .mp4, .zip) are permitted. Executable or web script files are strictly prohibited.'));
+    }
+    cb(null, true);
+  }
 });
+
+// Deep File Inspection (Magic Byte Verification) to prevent disguised executables/scripts
+function validateFileBufferSignature(filePath: string, ext: string): boolean {
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(16);
+    fs.readSync(fd, buffer, 0, 16, 0);
+    fs.closeSync(fd);
+
+    // Reject executable binary headers: DOS/Windows MZ ('MZ' = 0x4D, 0x5A), ELF (0x7F, 'ELF')
+    if (buffer[0] === 0x4d && buffer[1] === 0x5a) return false;
+    if (buffer[0] === 0x7f && buffer[1] === 0x45 && buffer[2] === 0x4c && buffer[3] === 0x46) return false;
+
+    // Validate expected signatures for common types:
+    if (ext === '.pdf') {
+      return buffer.slice(0, 4).toString('utf-8') === '%PDF';
+    }
+    if (ext === '.png') {
+      return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    }
+    if (ext === '.jpg' || ext === '.jpeg') {
+      return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    }
+    if (ext === '.gif') {
+      const sig = buffer.slice(0, 6).toString('utf-8');
+      return sig.startsWith('GIF8');
+    }
+    if (ext === '.zip' || ext === '.docx' || ext === '.pptx' || ext === '.xlsx') {
+      return buffer[0] === 0x50 && buffer[1] === 0x4b;
+    }
+    return true;
+  } catch (err) {
+    return true;
+  }
+}
+
 
 // GET /api/resources with rich filters
 resourceRouter.get('/', authMiddleware, (req: AuthenticatedRequest, res) => {
@@ -187,6 +237,13 @@ resourceRouter.post(
     let fileType = '';
 
     if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!validateFileBufferSignature(req.file.path, ext)) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        return res.status(400).json({
+          error: 'Security verification failed: File content does not match its declared format (magic-byte mismatch). Disguised or corrupted files are strictly rejected.'
+        });
+      }
       fileName = req.file.originalname;
       fileSize = req.file.size;
       fileType = req.file.mimetype;
@@ -365,6 +422,13 @@ resourceRouter.post(
     let fileType = 'application/pdf';
 
     if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!validateFileBufferSignature(req.file.path, ext)) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        return res.status(400).json({
+          error: 'Security verification failed: File content does not match its declared format (magic-byte mismatch).'
+        });
+      }
       fileName = req.file.originalname;
       fileSize = req.file.size;
       fileType = req.file.mimetype;
