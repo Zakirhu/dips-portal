@@ -19,6 +19,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "three128": [
+        "./node_modules/three"
+      ],
+      "@designcodeio/threeui": [
+        "./src/shaders/threeui-index.tsx"
+      ],
+      "@designcodeio/threeui/*": [
+        "./src/shaders/*"
       ]
     },
     "allowImportingTsExtensions": true,

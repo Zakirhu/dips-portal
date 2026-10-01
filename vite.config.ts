@@ -17,6 +17,9 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        'three128': path.resolve(__dirname, 'node_modules/three'),
+        '@designcodeio/threeui/style.css': path.resolve(__dirname, 'src/shaders/threeui.css'),
+        '@designcodeio/threeui': path.resolve(__dirname, 'src/shaders/threeui-index.tsx'),
       },
     },
     server: {
