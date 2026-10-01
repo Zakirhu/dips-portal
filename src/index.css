@@ -134,22 +134,215 @@ iframe {
   display: none;
 }
 
-/* Safe touch targets & input zoom prevention on mobile */
-@media (max-width: 640px) {
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="search"],
-  select,
-  textarea {
-    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
-  }
+/* =========================================================
+   FIRST PAGE TIMED ENTRANCE ANIMATIONS
+   ========================================================= */
 
-  /* Modals on mobile should fit screens neatly */
-  .modal-container {
-    max-width: calc(100vw - 1rem) !important;
-    margin: 0.5rem auto !important;
+@keyframes navFadeDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
+
+@keyframes drawLine {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInSimple {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp24 {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeUp16 {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeUp20 {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRightCard {
+  0% {
+    opacity: 0;
+    transform: translateX(40px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes goldShimmerSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.anim-navbar {
+  opacity: 0;
+  animation: navFadeDown 600ms cubic-bezier(0.16, 1, 0.3, 1) 0ms forwards;
+}
+
+.anim-eyebrow-line {
+  transform-origin: left;
+  animation: drawLine 500ms cubic-bezier(0.16, 1, 0.3, 1) 150ms forwards;
+}
+
+.anim-eyebrow-text {
+  opacity: 0;
+  animation: fadeInSimple 400ms ease-out 650ms forwards;
+}
+
+.anim-headline-1 {
+  opacity: 0;
+  animation: fadeUp24 600ms cubic-bezier(0.16, 1, 0.3, 1) 300ms forwards;
+}
+
+.anim-headline-2 {
+  opacity: 0;
+  animation: fadeUp24 600ms cubic-bezier(0.16, 1, 0.3, 1) 400ms forwards;
+}
+
+.anim-headline-3 {
+  opacity: 0;
+  animation: fadeUp24 600ms cubic-bezier(0.16, 1, 0.3, 1) 550ms forwards;
+}
+
+.gold-shimmer-sweep {
+  background: linear-gradient(
+    90deg,
+    #F5B82E 0%,
+    #FFF1BF 25%,
+    #F5B82E 50%,
+    #E6A117 75%,
+    #F5B82E 100%
+  );
+  background-size: 200% auto;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  animation: goldShimmerSweep 1.8s ease-in-out 1100ms infinite alternate;
+}
+
+.anim-subheading {
+  opacity: 0;
+  animation: fadeUp16 600ms cubic-bezier(0.16, 1, 0.3, 1) 750ms forwards;
+}
+
+.anim-cta-1 {
+  opacity: 0;
+  animation: fadeUp16 500ms cubic-bezier(0.16, 1, 0.3, 1) 900ms forwards;
+}
+
+.anim-cta-2 {
+  opacity: 0;
+  animation: fadeUp16 500ms cubic-bezier(0.16, 1, 0.3, 1) 980ms forwards;
+}
+
+.anim-login-card {
+  opacity: 0;
+  animation: slideInRightCard 700ms cubic-bezier(0.16, 1, 0.3, 1) 700ms forwards;
+}
+
+.anim-campus-panel {
+  opacity: 0;
+  animation: fadeUp20 600ms cubic-bezier(0.16, 1, 0.3, 1) 1000ms forwards;
+}
+
+/* Stagger animation helper for campus list cards */
+.anim-stagger-card {
+  opacity: 0;
+  animation: fadeUp16 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scroll reveal class */
+.reveal-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Shader Frame for ThreeUI Backgrounds */
+.shader-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.threeui-mount {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.threeui-mount .cross-beam-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+
 

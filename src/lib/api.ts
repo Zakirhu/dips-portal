@@ -80,8 +80,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
-  login: (credentials: { username: string; password: string; expectedRole?: string }) =>
-    request<{ token: string; user: User }>('/api/auth/login', {
+  login: (credentials: { username: string; password: string; expectedRole?: string; twoFactorCode?: string }) =>
+    request<{ token: string; user: User; requires2FA?: boolean }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
@@ -106,20 +106,41 @@ export const api = {
 
   get2FASetup: () =>
     request<{ secret: string; otpauthUrl: string; qrCodeDataUrl?: string; enabled: boolean; role?: string }>('/api/auth/2fa/setup'),
-  verify2FA: (data: { secret: string; token: string }) =>
-    request<{ success: boolean; message: string }>('/api/auth/2fa/verify', {
+  setup2FA: () =>
+    request<{ secret: string; otpauthUrl: string; qrCodeDataUrl?: string; enabled: boolean; role?: string }>('/api/auth/2fa/setup'),
+  verify2FA: (dataOrSecret: { secret: string; token: string } | string, tokenStr?: string) => {
+    const payload = typeof dataOrSecret === 'string' ? { secret: dataOrSecret, token: tokenStr || '' } : dataOrSecret;
+    return request<{ success: boolean; message: string }>('/api/auth/2fa/verify', {
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  disable2FA: (data: { currentPassword: string }) =>
-    request<{ success: boolean; message: string }>('/api/auth/2fa/disable', {
+      body: JSON.stringify(payload),
+    });
+  },
+  disable2FA: (dataOrPassword: { currentPassword: string } | string) => {
+    const payload = typeof dataOrPassword === 'string' ? { currentPassword: dataOrPassword } : dataOrPassword;
+    return request<{ success: boolean; message: string }>('/api/auth/2fa/disable', {
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
   changeCredentials: (data: { currentPassword: string; newPassword?: string; newUsername?: string; newEmail?: string }) =>
     request<{ success: boolean; message: string; user?: User; token?: string }>('/api/auth/change-credentials', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+  updateCredentials: (data: { currentPassword: string; newPassword?: string; newUsername?: string; newEmail?: string }) =>
+    request<{ success: boolean; message: string; user?: User; token?: string }>('/api/auth/change-credentials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getActiveSessions: () =>
+    request<{ sessions: any[] }>('/api/auth/active-sessions'),
+  terminateSession: (sessionId: string) =>
+    request<{ success: boolean; message: string; isCurrent?: boolean }>(`/api/auth/active-sessions/${sessionId}/terminate`, {
+      method: 'POST',
+    }),
+  terminateUserSessions: (userId: string) =>
+    request<{ success: boolean; message: string; count?: number }>(`/api/auth/active-sessions/terminate-user/${userId}`, {
+      method: 'POST',
     }),
   changePassword: (passwords: { currentPassword: string; newPassword: string }) =>
     request<{ success: boolean; message: string }>('/api/auth/change-password', {

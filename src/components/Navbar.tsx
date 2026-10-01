@@ -195,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 leading-tight">
-                DIPS Institutions
+                DIPS
               </h1>
               <span className="hidden xl:inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                 Session 2026-27
