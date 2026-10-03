@@ -1070,9 +1070,11 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                             </div>
                           </div>
 
-                          <div className="text-[11px] text-slate-500 pt-1 flex items-center justify-between">
-                            <span className="truncate">By: {res.uploadedByName}</span>
-                            <span className="shrink-0">{new Date(res.updatedAt).toLocaleDateString()}</span>
+                          <div className="text-[11px] text-slate-500 pt-1 flex items-center justify-between gap-2">
+                            <span className="truncate font-medium text-slate-700">
+                              By <strong>{res.uploadedByName}</strong> ({res.branchName || res.uploadedByBranch})
+                            </span>
+                            <span className="shrink-0 text-slate-400">{new Date(res.updatedAt).toLocaleDateString()}</span>
                           </div>
                         </div>
 
@@ -1310,11 +1312,11 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                      <span className="truncate max-w-[180px]">
-                        {res.branchName} • By {res.uploadedByName}
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 gap-2">
+                      <span className="truncate max-w-[200px] font-medium text-slate-700">
+                        By <strong>{res.uploadedByName}</strong> ({res.branchName || res.uploadedByBranch})
                       </span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <StarRatingBadge rating={res.averageRating} count={res.ratingsCount} showZero={false} />
                       </div>
                     </div>
@@ -1800,9 +1802,11 @@ export const TeacherPortal: React.FC<TeacherPortalProps> = ({
                         </p>
                       )}
 
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                        <span>Uploaded: {new Date(res.createdAt).toLocaleDateString()}</span>
-                        <span>{res.downloadsCount || 0} Downloads</span>
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 gap-2">
+                        <span className="truncate font-medium text-slate-700">
+                          By <strong>{res.uploadedByName}</strong> ({res.branchName || res.uploadedByBranch})
+                        </span>
+                        <span className="shrink-0 text-slate-400">{res.downloadsCount || 0} Downloads</span>
                       </div>
                     </div>
 

@@ -215,7 +215,7 @@ export function requireTeacherOrAdmin(req: AuthenticatedRequest, res: Response, 
 export function canTeacherAccessSubject(user: User, subjectId: string): boolean {
   if (user.role === 'admin') return true;
   if (user.role === 'teacher' || user.role === 'coordinator') {
-    return user.assignedSubjectIds?.includes(subjectId) || false;
+    return true; // All verified educators across all 19 campuses can share curriculum content
   }
   return false;
 }
@@ -223,7 +223,7 @@ export function canTeacherAccessSubject(user: User, subjectId: string): boolean 
 export function canEditResource(user: User, resource: Resource): boolean {
   if (user.role === 'admin') return true;
   if (user.role === 'teacher' || user.role === 'coordinator') {
-    return canTeacherAccessSubject(user, resource.subjectId);
+    return true;
   }
   return false;
 }

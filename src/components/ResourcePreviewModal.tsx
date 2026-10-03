@@ -181,21 +181,25 @@ export const ResourcePreviewModal: React.FC<ResourcePreviewModalProps> = ({
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100 text-xs">
             <div>
-              <span className="text-slate-400 block mb-1">Uploaded By</span>
+              <span className="text-slate-400 block mb-1">Uploaded By (Author & School)</span>
               <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-                <User className="w-3.5 h-3.5 text-slate-400" />
+                <User className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{resource.uploadedByName}</span>
               </div>
-              <span className="text-slate-500 text-[11px]">{resource.uploadedByBranch}</span>
+              <span className="text-slate-600 text-[11px] font-medium block mt-0.5">
+                {resource.uploadedByBranch || resource.branchName}
+              </span>
             </div>
 
             <div>
-              <span className="text-slate-400 block mb-1">Last Updated By</span>
+              <span className="text-slate-400 block mb-1">Last Contributor</span>
               <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>{resource.lastUpdatedByName}</span>
+                <span>{resource.lastUpdatedByName || resource.uploadedByName}</span>
               </div>
-              <span className="text-slate-500 text-[11px]">{resource.lastUpdatedByBranch}</span>
+              <span className="text-slate-600 text-[11px] font-medium block mt-0.5">
+                {resource.lastUpdatedByBranch || resource.branchName}
+              </span>
             </div>
 
             <div>

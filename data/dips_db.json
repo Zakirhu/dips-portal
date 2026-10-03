@@ -226,7 +226,7 @@
       "principalName": "Mrs. Seema Sharma",
       "establishedYear": 2014,
       "totalStudents": 0,
-      "totalTeachers": 0
+      "totalTeachers": 1
     }
   ],
   "classes": [
@@ -1107,9 +1107,173 @@
       "isActive": true,
       "createdAt": "2026-09-19T00:00:00.000Z",
       "passwordHash": "d041c3d3ca4ed64c5b54c5d807bd9a0bd2d6ae3609ecd2d06ac383db449360e1"
+    },
+    {
+      "id": "user-tea-685188",
+      "username": "emptan550",
+      "email": "simran.singh@dips.edu",
+      "fullName": "Simranjeet Singh",
+      "role": "teacher",
+      "branchId": "branch-tanda",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "employeeId": "EMP-TAN-550",
+      "designation": "TGT Mathematics",
+      "assignedSubjectIds": [
+        "sub-math"
+      ],
+      "assignedClassIds": [
+        "class-8",
+        "class-9"
+      ],
+      "phone": "",
+      "isActive": true,
+      "createdAt": "2026-10-03T05:51:25.188Z",
+      "passwordHash": "$2b$10$WMV5Ys1gJQSDCs3BHi99wuzWDLs7gPBFR.I4nUq2P0HYBzcKV6tKm"
     }
   ],
   "resources": [
+    {
+      "id": "res-1791006685476-u24h",
+      "title": "Circles & Tangents Theorem Proofs",
+      "description": "",
+      "subjectId": "sub-math",
+      "subjectName": "Mathematics",
+      "classId": "class-10",
+      "className": "Class X",
+      "branchId": "branch-tanda",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "chapter": "Circles",
+      "topic": "Theorem 10.1 & 10.2 Proofs",
+      "category": "Study Material",
+      "contentType": "PDF",
+      "academicSession": "2026-27",
+      "status": "published",
+      "currentVersion": 1,
+      "versions": [
+        {
+          "versionNumber": 1,
+          "versionTitle": "Initial Release",
+          "changelog": "Initial upload of resource to DIPS portal.",
+          "fileUrl": "/uploads/sample-cs-looping-notes.pdf",
+          "fileName": "Circles___Tangents_Theorem_Proofs.pdf",
+          "fileSize": 102400,
+          "fileType": "application/pdf",
+          "uploadedByUserId": "user-tea-685188",
+          "uploadedByUserName": "Simranjeet Singh",
+          "uploadedByUserBranch": "DIPS School, Tanda (Hoshiarpur)",
+          "uploadedAt": "2026-10-03T05:51:25.476Z"
+        }
+      ],
+      "fileName": "Circles___Tangents_Theorem_Proofs.pdf",
+      "fileUrl": "/uploads/sample-cs-looping-notes.pdf",
+      "fileSize": 102400,
+      "uploadedByUserId": "user-tea-685188",
+      "uploadedByName": "Simranjeet Singh",
+      "uploadedByBranch": "DIPS School, Tanda (Hoshiarpur)",
+      "uploadedByEmployeeId": "EMP-TAN-550",
+      "lastUpdatedByUserId": "user-tea-685188",
+      "lastUpdatedByName": "Simranjeet Singh",
+      "lastUpdatedByBranch": "DIPS School, Tanda (Hoshiarpur)",
+      "createdAt": "2026-10-03T05:51:25.476Z",
+      "updatedAt": "2026-10-03T05:51:25.476Z",
+      "downloadsCount": 0,
+      "viewsCount": 0
+    },
+    {
+      "id": "res-1791006665136-knk7",
+      "title": "Test Real Analysis Notes",
+      "description": "",
+      "subjectId": "sub-math",
+      "subjectName": "Mathematics",
+      "classId": "class-10",
+      "className": "Class X",
+      "branchId": "branch-begowal",
+      "branchName": "DIPS School, Begowal (Kapurthala)",
+      "chapter": "Real Numbers",
+      "topic": "Euclid Division Lemma",
+      "category": "Study Material",
+      "contentType": "PDF",
+      "academicSession": "2026-27",
+      "status": "published",
+      "currentVersion": 1,
+      "versions": [
+        {
+          "versionNumber": 1,
+          "versionTitle": "Initial Release",
+          "changelog": "Initial upload of resource to DIPS portal.",
+          "fileUrl": "/uploads/sample-cs-looping-notes.pdf",
+          "fileName": "Test_Real_Analysis_Notes.pdf",
+          "fileSize": 102400,
+          "fileType": "application/pdf",
+          "uploadedByUserId": "user-teacher-begowal",
+          "uploadedByUserName": "Harpreet Kaur (Maths Faculty)",
+          "uploadedByUserBranch": "DIPS School, Begowal (Kapurthala)",
+          "uploadedAt": "2026-10-03T05:51:05.136Z"
+        }
+      ],
+      "fileName": "Test_Real_Analysis_Notes.pdf",
+      "fileUrl": "/uploads/sample-cs-looping-notes.pdf",
+      "fileSize": 102400,
+      "uploadedByUserId": "user-teacher-begowal",
+      "uploadedByName": "Harpreet Kaur (Maths Faculty)",
+      "uploadedByBranch": "DIPS School, Begowal (Kapurthala)",
+      "uploadedByEmployeeId": "TCH-BEG-01",
+      "lastUpdatedByUserId": "user-teacher-begowal",
+      "lastUpdatedByName": "Harpreet Kaur (Maths Faculty)",
+      "lastUpdatedByBranch": "DIPS School, Begowal (Kapurthala)",
+      "createdAt": "2026-10-03T05:51:05.136Z",
+      "updatedAt": "2026-10-03T05:51:05.136Z",
+      "downloadsCount": 0,
+      "viewsCount": 0
+    },
+    {
+      "id": "res-1791006151158-9m5x",
+      "title": "Subject - Pre-Nursery - hindi-4",
+      "description": "Batch uploaded curriculum file for undefined (Pre-Nursery)",
+      "subjectId": "all",
+      "subjectName": "Subject",
+      "classId": "class-pre-nursery",
+      "className": "Pre-Nursery",
+      "branchId": "branch-dipsimt",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "chapter": "maths -1",
+      "topic": "General",
+      "category": "Study Material",
+      "contentType": "PDF",
+      "academicSession": "2026-27",
+      "status": "published",
+      "currentVersion": 1,
+      "versions": [
+        {
+          "versionNumber": 1,
+          "versionTitle": "Initial Release",
+          "changelog": "Initial upload of resource to DIPS portal.",
+          "fileUrl": "/uploads/1791006151016-9764-hindi-4.pdf",
+          "fileName": "hindi-4.pdf",
+          "fileSize": 767556,
+          "fileType": "application/pdf",
+          "uploadedByUserId": "user-tea-160900",
+          "uploadedByUserName": "jass",
+          "uploadedByUserBranch": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+          "uploadedAt": "2026-10-03T05:42:31.158Z",
+          "contentSnippet": "Batch uploaded curriculum file for undefined (Pre-Nursery)"
+        }
+      ],
+      "fileName": "hindi-4.pdf",
+      "fileUrl": "/uploads/1791006151016-9764-hindi-4.pdf",
+      "fileSize": 767556,
+      "uploadedByUserId": "user-tea-160900",
+      "uploadedByName": "jass",
+      "uploadedByBranch": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "uploadedByEmployeeId": "1",
+      "lastUpdatedByUserId": "user-tea-160900",
+      "lastUpdatedByName": "jass",
+      "lastUpdatedByBranch": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "createdAt": "2026-10-03T05:42:31.158Z",
+      "updatedAt": "2026-10-03T05:42:31.158Z",
+      "downloadsCount": 0,
+      "viewsCount": 0
+    },
     {
       "id": "res-cs-01",
       "title": "Python Basics & Variables - Chapter Notes with Interactive Exercises",
@@ -1464,8 +1628,180 @@
       "createdAt": "2026-09-20T14:00:00.000Z"
     }
   ],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif-1791006685491-l36d",
+      "userId": "user-teacher-begowal",
+      "title": "New Resource: Mathematics",
+      "message": "Simranjeet Singh (DIPS School, Tanda (Hoshiarpur)) shared \"Circles & Tangents Theorem Proofs\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:25.476Z"
+    },
+    {
+      "id": "notif-1791006685490-13wi",
+      "userId": "user-tea-160900",
+      "title": "New Resource: Mathematics",
+      "message": "Simranjeet Singh (DIPS School, Tanda (Hoshiarpur)) shared \"Circles & Tangents Theorem Proofs\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:25.476Z"
+    },
+    {
+      "id": "notif-1791006685490-90v5",
+      "userId": "user-coordinator-1",
+      "title": "New Resource: Mathematics",
+      "message": "Simranjeet Singh (DIPS School, Tanda (Hoshiarpur)) shared \"Circles & Tangents Theorem Proofs\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:25.476Z"
+    },
+    {
+      "id": "notif-1791006685490-hi9c",
+      "userId": "user-teacher-1",
+      "title": "New Resource: Mathematics",
+      "message": "Simranjeet Singh (DIPS School, Tanda (Hoshiarpur)) shared \"Circles & Tangents Theorem Proofs\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:25.476Z"
+    },
+    {
+      "id": "notif-1791006665152-ns5e",
+      "userId": "user-tea-160900",
+      "title": "New Resource: Mathematics",
+      "message": "Harpreet Kaur (Maths Faculty) (DIPS School, Begowal (Kapurthala)) shared \"Test Real Analysis Notes\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:05.136Z"
+    },
+    {
+      "id": "notif-1791006665152-vdtq",
+      "userId": "user-coordinator-1",
+      "title": "New Resource: Mathematics",
+      "message": "Harpreet Kaur (Maths Faculty) (DIPS School, Begowal (Kapurthala)) shared \"Test Real Analysis Notes\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:05.136Z"
+    },
+    {
+      "id": "notif-1791006665152-t8e1",
+      "userId": "user-teacher-1",
+      "title": "New Resource: Mathematics",
+      "message": "Harpreet Kaur (Maths Faculty) (DIPS School, Begowal (Kapurthala)) shared \"Test Real Analysis Notes\" for Class X.",
+      "type": "resource_upload",
+      "link": "/resources?subjectId=sub-math",
+      "isRead": false,
+      "createdAt": "2026-10-03T05:51:05.136Z"
+    }
+  ],
   "activityLogs": [
+    {
+      "userId": "user-tea-685188",
+      "userName": "Simranjeet Singh (EMP-TAN-550)",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "action": "UPLOAD",
+      "resourceTitle": "Circles & Tangents Theorem Proofs",
+      "subjectName": "Mathematics",
+      "details": "Uploaded new PDF resource for Class X Mathematics (published).",
+      "id": "act-1791006685489-02ev6",
+      "timestamp": "2026-10-03T05:51:25.489Z"
+    },
+    {
+      "userId": "user-tea-685188",
+      "userName": "Simranjeet Singh",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "action": "LOGIN",
+      "details": "User (Simranjeet Singh, teacher) logged in from DIPS School, Tanda (Hoshiarpur).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791006685419-g1bir",
+      "timestamp": "2026-10-03T05:51:25.419Z"
+    },
+    {
+      "userId": "user-tea-685188",
+      "userName": "Simranjeet Singh",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Tanda (Hoshiarpur)",
+      "action": "LOGIN",
+      "details": "Teacher self-registered institutional account (Simranjeet Singh, EMP-TAN-550) at DIPS School, Tanda (Hoshiarpur).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791006685309-l0qgv",
+      "timestamp": "2026-10-03T05:51:25.309Z"
+    },
+    {
+      "userId": "user-teacher-begowal",
+      "userName": "Harpreet Kaur (Maths Faculty) (TCH-BEG-01)",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Begowal (Kapurthala)",
+      "action": "UPLOAD",
+      "resourceTitle": "Test Real Analysis Notes",
+      "subjectName": "Mathematics",
+      "details": "Uploaded new PDF resource for Class X Mathematics (published).",
+      "id": "act-1791006665151-zak62",
+      "timestamp": "2026-10-03T05:51:05.151Z"
+    },
+    {
+      "userId": "user-teacher-begowal",
+      "userName": "Harpreet Kaur (Maths Faculty)",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Begowal (Kapurthala)",
+      "action": "LOGIN",
+      "details": "User (Harpreet Kaur (Maths Faculty), teacher) logged in from DIPS School, Begowal (Kapurthala).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791006665086-0jnns",
+      "timestamp": "2026-10-03T05:51:05.086Z"
+    },
+    {
+      "userId": "user-teacher-begowal",
+      "userName": "Harpreet Kaur (Maths Faculty)",
+      "userRole": "teacher",
+      "branchName": "DIPS School, Begowal (Kapurthala)",
+      "action": "LOGIN",
+      "details": "User (Harpreet Kaur (Maths Faculty), teacher) logged in from DIPS School, Begowal (Kapurthala).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791006658064-n0otm",
+      "timestamp": "2026-10-03T05:50:58.064Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass (1)",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "UPLOAD",
+      "resourceTitle": "Subject - Pre-Nursery - hindi-4",
+      "details": "Uploaded new PDF resource for Pre-Nursery undefined (published).",
+      "id": "act-1791006151193-fa8sv",
+      "timestamp": "2026-10-03T05:42:31.193Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "LOGIN",
+      "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791006130446-ie3fb",
+      "timestamp": "2026-10-03T05:42:10.446Z"
+    },
+    {
+      "userId": "user-tea-160900",
+      "userName": "jass",
+      "userRole": "teacher",
+      "branchName": "DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar)",
+      "action": "LOGIN",
+      "details": "User (jass, teacher) logged in from DIPS Institute of Management & Technology (DIPSIMT) (Jalandhar).",
+      "ipAddress": "127.0.0.1",
+      "id": "act-1791002488749-xva2l",
+      "timestamp": "2026-10-03T04:41:28.749Z"
+    },
     {
       "userId": "user-tea-160900",
       "userName": "jass",

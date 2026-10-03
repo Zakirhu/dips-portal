@@ -51,18 +51,10 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
   initialSubjectId,
   initialClassId,
 }) => {
-  // Allowed subjects: if admin or no specific assigned subjects, show all subjects; otherwise filter
-  const allowedSubjects =
-    currentUser.role === 'admin' || !currentUser.assignedSubjectIds || currentUser.assignedSubjectIds.length === 0
-      ? subjects
-      : subjects.filter((s) => currentUser.assignedSubjectIds?.includes(s.id));
-  
-  const finalAllowedSubjects = allowedSubjects.length > 0 ? allowedSubjects : subjects;
-
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subjectId, setSubjectId] = useState(
-    initialSubjectId || (allowedSubjects.length > 0 ? allowedSubjects[0].id : '')
+    initialSubjectId || (subjects.length > 0 ? subjects[0].id : '')
   );
   const [classId, setClassId] = useState(
     initialClassId || (classes.length > 0 ? classes[0].id : '')
@@ -223,9 +215,11 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
                 <Layers className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <span className="font-bold text-indigo-900 block text-xs truncate">Auto-Tagging Enabled</span>
+                <span className="font-bold text-indigo-900 block text-xs truncate">
+                  Author: {currentUser.fullName} ({currentUser.branchName || 'DIPS Campus'})
+                </span>
                 <span className="text-[10px] sm:text-[11px] text-indigo-700 block truncate">
-                  Will inherit: <strong>{selectedSub?.name || 'Subject'}</strong> ({selectedCls?.name || 'Class'})
+                  Publishing for: <strong>{selectedSub?.name || 'Subject'}</strong> • <strong>{selectedCls?.name || 'Class'}</strong>
                 </span>
               </div>
             </div>
@@ -245,7 +239,7 @@ export const UploadResourceModal: React.FC<UploadResourceModalProps> = ({
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 required
               >
-                {finalAllowedSubjects.map((sub) => (
+                {subjects.map((sub) => (
                   <option key={sub.id} value={sub.id}>
                     {sub.name} ({sub.code})
                   </option>
