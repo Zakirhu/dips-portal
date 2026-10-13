@@ -1,0 +1,197 @@
+{
+  "students": [],
+  "tests": [
+    {
+      "id": "exam-cbse-term1-x",
+      "examCode": "CBSE-IT-2026-X",
+      "title": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "subjectId": "it_402",
+      "classLevel": "X",
+      "section": "A",
+      "topic": "Electronic Spreadsheets & Database Management",
+      "chapterTitle": "Electronic Spreadsheets & DBMS",
+      "durationMinutes": 45,
+      "totalMarks": 20,
+      "passingMarks": 8,
+      "maxAttempts": 1,
+      "status": "live",
+      "academicSession": "2026-2027",
+      "showResultsImmediately": false,
+      "showAnswerKeysToStudents": true,
+      "questions": [
+        {
+          "id": "q1-mcq",
+          "question": "Which of the following functions in Calc is used to add data across multiple sheets?",
+          "type": "mcq",
+          "marks": 2,
+          "chapterTitle": "Electronic Spreadsheets",
+          "options": [
+            "Consolidate Data",
+            "Goal Seek",
+            "Solver",
+            "Scenario Manager"
+          ],
+          "correctAnswer": 0,
+          "explanation": "Data -> Consolidate allows combining data from multiple sheets into one summary."
+        },
+        {
+          "id": "q2-tf",
+          "question": "True or False: A primary key in DBMS can contain NULL values.",
+          "type": "true_false",
+          "marks": 2,
+          "chapterTitle": "Database Management",
+          "options": [
+            "True",
+            "False"
+          ],
+          "correctAnswer": 1,
+          "explanation": "A Primary Key must be unique and NOT NULL."
+        },
+        {
+          "id": "q3-fib",
+          "question": "The tool used to find the input value needed to achieve a target result is called ________.",
+          "type": "fill_blank",
+          "marks": 3,
+          "chapterTitle": "Electronic Spreadsheets",
+          "correctAnswer": "Goal Seek",
+          "explanation": "Goal Seek performs reverse calculation to determine the required input."
+        },
+        {
+          "id": "q4-short",
+          "question": "State two differences between a Flat File database and a Relational database.",
+          "type": "short_answer",
+          "marks": 5,
+          "chapterTitle": "Database Management",
+          "correctAnswer": "Flat file stores data in single plain table; RDBMS organizes in multiple linked tables using keys to prevent redundancy.",
+          "explanation": "Evaluate based on explanation of tables, keys, and redundancy."
+        },
+        {
+          "id": "q5-long",
+          "question": "Explain the role of Referential Integrity in relational databases with a practical example.",
+          "type": "long_answer",
+          "marks": 8,
+          "chapterTitle": "Database Management",
+          "correctAnswer": "Referential integrity ensures relationships between tables remain consistent, preventing orphan foreign keys.",
+          "explanation": "Full marks for definition, foreign key role, and real-world student-enrollment example."
+        }
+      ]
+    }
+  ],
+  "lastUpdated": "2026-10-10T08:14:41.114Z",
+  "labSessions": [
+    {
+      "id": "sess-1791620034600-09aa",
+      "examId": "exam-cbse-term1-x",
+      "studentId": "usr-student-2",
+      "studentName": "Priya Patel",
+      "rollNumber": "1025",
+      "classLevel": "X",
+      "section": "A",
+      "workstationIp": "LAB-PC-07",
+      "status": "in_progress",
+      "startedAt": "2026-10-10T08:13:54.600Z",
+      "lastActiveAt": "2026-10-10T08:13:54.600Z",
+      "durationRemainingSeconds": 2700,
+      "answers": {},
+      "markedForReview": [],
+      "autoScore": 0,
+      "finalScore": 0,
+      "totalMarks": 20,
+      "percentage": 0,
+      "passed": false,
+      "isEvaluated": false,
+      "attemptNumber": 1
+    },
+    {
+      "id": "sess-1791620034560-sxz0",
+      "examId": "exam-cbse-term1-x",
+      "studentId": "usr-student-1",
+      "studentName": "Rahul Sharma",
+      "rollNumber": "1024",
+      "classLevel": "X",
+      "section": "A",
+      "workstationIp": "LAB-PC-04",
+      "status": "in_progress",
+      "startedAt": "2026-10-10T08:13:54.560Z",
+      "lastActiveAt": "2026-10-10T08:14:41.080Z",
+      "durationRemainingSeconds": 2654,
+      "answers": {},
+      "markedForReview": [],
+      "autoScore": 0,
+      "finalScore": 12,
+      "totalMarks": 20,
+      "percentage": 60,
+      "passed": true,
+      "isEvaluated": true,
+      "attemptNumber": 1,
+      "manualEvaluations": {
+        "q4-short": {
+          "marks": 5,
+          "feedback": "Full marks for clear relational architecture distinction."
+        },
+        "q5-long": {
+          "marks": 7,
+          "feedback": "Strong explanation of foreign key constraints."
+        }
+      },
+      "manualScore": 12
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit-1791620081114-g43i",
+      "examId": "exam-cbse-term1-x",
+      "examTitle": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "studentId": "usr-student-1",
+      "studentName": "Rahul Sharma",
+      "action": "evaluated",
+      "details": "Invigilator evaluated descriptive answers for Rahul Sharma. Manual marks: 12. Final: 12/20.",
+      "workstationIp": "LAB-PC-04",
+      "timestamp": "2026-10-10T08:14:41.114Z"
+    },
+    {
+      "id": "audit-1791620081080-ogqm",
+      "examId": "exam-cbse-term1-x",
+      "examTitle": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "studentId": "usr-student-1",
+      "studentName": "Rahul Sharma",
+      "action": "exam_started",
+      "details": "Session restored after interruption/refresh at workstation LAB-PC-04. 44m remaining.",
+      "workstationIp": "LAB-PC-04",
+      "timestamp": "2026-10-10T08:14:41.080Z"
+    },
+    {
+      "id": "audit-1791620034600-ajup",
+      "examId": "exam-cbse-term1-x",
+      "examTitle": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "studentId": "usr-student-2",
+      "studentName": "Priya Patel",
+      "action": "exam_started",
+      "details": "Student started examination at workstation LAB-PC-07. Allocated: 45 mins.",
+      "workstationIp": "LAB-PC-07",
+      "timestamp": "2026-10-10T08:13:54.600Z"
+    },
+    {
+      "id": "audit-1791620034590-hx4v",
+      "examId": "exam-cbse-term1-x",
+      "examTitle": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "studentId": "usr-student-1",
+      "studentName": "Rahul Sharma",
+      "action": "evaluated",
+      "details": "Invigilator evaluated descriptive answers for Rahul Sharma. Manual marks: 12. Final: 12/20.",
+      "workstationIp": "LAB-PC-04",
+      "timestamp": "2026-10-10T08:13:54.590Z"
+    },
+    {
+      "id": "audit-1791620034561-1p3z",
+      "examId": "exam-cbse-term1-x",
+      "examTitle": "Class X Information Technology (IT 402) - Term 1 Practical & Theory Examination",
+      "studentId": "usr-student-1",
+      "studentName": "Rahul Sharma",
+      "action": "exam_started",
+      "details": "Student started examination at workstation LAB-PC-04. Allocated: 45 mins.",
+      "workstationIp": "LAB-PC-04",
+      "timestamp": "2026-10-10T08:13:54.561Z"
+    }
+  ]
+}

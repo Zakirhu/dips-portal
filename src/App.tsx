@@ -1,279 +1,365 @@
-import React, { useState, useEffect } from 'react';
-import type { User, Resource, Subject, AcademicClass } from './types.js';
-import { api, getStoredUser, clearStoredAuth, setStoredAuth } from './lib/api.js';
-import { LoginPage } from './components/LoginPage.js';
-import { Navbar } from './components/Navbar.js';
-import { AdminPortal } from './components/AdminPortal.js';
-import { TeacherPortal } from './components/TeacherPortal.js';
-import { StudentPortal } from './components/StudentPortal.js';
-import { ResourcePreviewModal } from './components/ResourcePreviewModal.js';
-import { VersionHistoryModal } from './components/VersionHistoryModal.js';
-import { NewVersionModal } from './components/NewVersionModal.js';
-import { UploadResourceModal } from './components/UploadResourceModal.js';
-import { GlobalAnnouncementBanner } from './components/GlobalAnnouncementBanner.js';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [activeNavTab, setActiveNavTab] = useState('home');
+import React, { useState } from 'react';
+import { AppProvider, useApp } from './context/AppContext';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { CertificateModal } from './components/CertificateModal';
+import { SearchModal } from './components/SearchModal';
+import { AuthModal } from './components/AuthModal';
+import { HomeView } from './components/views/HomeView';
+import { StudyMaterialView } from './components/views/StudyMaterialView';
+import { QuizView } from './components/views/QuizView';
+import { DashboardView } from './components/views/DashboardView';
+import { QuestionBankView } from './components/views/QuestionBankView';
+import { AdminPanelView } from './components/views/AdminPanelView';
+import { AboutView } from './components/views/AboutView';
+import { ContactView } from './components/views/ContactView';
+import { StudyRoomView } from './components/views/StudyRoomView';
+import { ChapterLmsView } from './components/views/ChapterLmsView';
+import { LabExamPortalView } from './components/views/LabExamPortalView';
+import { StudentLoginView } from './components/views/StudentLoginView';
+import { ErrorView } from './components/views/ErrorView';
+import { StudyMaterial, QuizConfig, QuizAttempt, ClassLevel, SubjectId } from './types';
+import { Lock, LogIn, GraduationCap, LayoutDashboard, ShieldAlert } from 'lucide-react';
 
-  // Modals state
-  const [previewResource, setPreviewResource] = useState<Resource | null>(null);
-  const [versionModalResource, setVersionModalResource] = useState<Resource | null>(null);
-  const [collaborateResource, setCollaborateResource] = useState<Resource | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadInitialSubjectId, setUploadInitialSubjectId] = useState<string | undefined>();
-  const [uploadInitialClassId, setUploadInitialClassId] = useState<string | undefined>();
+const MainLayout: React.FC = () => {
+  const { 
+    userRole, 
+    isAuthenticated,
+    openAuthModal,
+    studentProfile, 
+    activeCertificateAttempt, 
+    setActiveCertificateAttempt, 
+    quizzes, 
+    selectedClassFilter,
+    setSelectedClassFilter 
+  } = useApp();
 
-  // Academic metadata for upload modals
-  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
-  const [allClasses, setAllClasses] = useState<AcademicClass[]>([]);
+  const [currentTab, setCurrentTab] = useState<string>('lms');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [materialToOpenInReader, setMaterialToOpenInReader] = useState<StudyMaterial | null>(null);
+  const [quizToStartDirectly, setQuizToStartDirectly] = useState<QuizConfig | null>(null);
+  const [studyRoomToOpen, setStudyRoomToOpen] = useState<string | null>(null);
 
-  // Check initial user authentication
-  useEffect(() => {
-    const initAuth = async () => {
-      const stored = getStoredUser();
-      if (stored) {
-        try {
-          const res = await api.getCurrentUser();
-          setCurrentUser(res.user);
-        } catch {
-          // Token expired or invalid
-          clearStoredAuth();
-          setCurrentUser(null);
-        }
+  // Keyboard shortcut Ctrl+K / Cmd+K for search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
       }
-      setLoadingUser(false);
     };
-
-    initAuth();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Fetch subjects and classes when user logs in
-  useEffect(() => {
-    if (currentUser) {
-      Promise.all([api.getSubjects(), api.getClasses()])
-        .then(([subsRes, clsRes]) => {
-          setAllSubjects(subsRes.subjects);
-          setAllClasses(clsRes.classes);
-        })
-        .catch(() => {});
+  const handleOpenMaterialReader = (mat: StudyMaterial) => {
+    setMaterialToOpenInReader(mat);
+    setCurrentTab('materials');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleStartQuiz = (qz: QuizConfig) => {
+    setQuizToStartDirectly(qz);
+    setCurrentTab('quiz');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleStartQuizWithChapter = (classLevel: ClassLevel, subjectId: SubjectId, chapterId?: string) => {
+    setSelectedClassFilter(classLevel);
+    const match = quizzes.find(q => q.classLevel === classLevel && q.subjectId === subjectId);
+    if (match) {
+      setQuizToStartDirectly(match);
     }
-  }, [currentUser?.id]);
-
-  // Inactivity Auto-Lock: automatically log out after 30 minutes of zero user activity
-  useEffect(() => {
-    if (!currentUser) return;
-    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-    let timeoutId: any;
-
-    const resetTimer = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        clearStoredAuth();
-        setCurrentUser(null);
-        setActiveNavTab('home');
-      }, INACTIVITY_TIMEOUT_MS);
-    };
-
-    const handleSessionRevoked = (e: any) => {
-      clearStoredAuth();
-      setCurrentUser(null);
-      setActiveNavTab('home');
-      alert(e.detail?.message || 'Your session has been terminated by the administrator. Please log in again.');
-    };
-    window.addEventListener('dips_session_terminated', handleSessionRevoked);
-
-    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-    events.forEach((ev) => window.addEventListener(ev, resetTimer, { passive: true }));
-    resetTimer();
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('dips_session_terminated', handleSessionRevoked);
-      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
-    };
-  }, [currentUser]);
-
-  const handleLogout = () => {
-    clearStoredAuth();
-    setCurrentUser(null);
+    setCurrentTab('quiz');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleQuickSwitchUser = (newUser: User) => {
-    setCurrentUser(newUser);
+  const handleStartPracticeTopic = (chapterTitle: string) => {
+    setCurrentTab('quiz');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const handleDownload = async (resource: Resource) => {
-    try {
-      await api.trackDownload(resource.id);
-      // Trigger browser download or new tab navigation
-      const downloadLink = document.createElement('a');
-      downloadLink.href = resource.fileUrl;
-      downloadLink.download = resource.fileName;
-      downloadLink.target = '_blank';
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-    } catch {
-      window.open(resource.fileUrl, '_blank');
-    }
-  };
-
-  const handleRestoreVersion = async (resource: Resource, versionNumber: number) => {
-    try {
-      const res = await api.restoreResourceVersion(resource.id, versionNumber);
-      setVersionModalResource(res.resource);
-      if (previewResource && previewResource.id === resource.id) {
-        setPreviewResource(res.resource);
-      }
-      alert(`Version ${versionNumber} has been successfully restored as the active version.`);
-    } catch (err: any) {
-      alert(err.message || 'Failed to restore version');
-    }
-  };
-
-  const handleAddVersionSubmit = async (resourceId: string, formData: FormData) => {
-    const res = await api.addResourceVersion(resourceId, formData);
-    if (previewResource && previewResource.id === resourceId) {
-      setPreviewResource(res.resource);
-    }
-    if (versionModalResource && versionModalResource.id === resourceId) {
-      setVersionModalResource(res.resource);
-    }
-    window.dispatchEvent(new CustomEvent('dips_resource_uploaded', { detail: { resource: res.resource } }));
-    alert(`Version ${res.resource.currentVersion} published successfully!`);
-  };
-
-  const handleCreateResourceSubmit = async (formData: FormData) => {
-    const res = await api.createResource(formData);
-    window.dispatchEvent(new CustomEvent('dips_resource_uploaded', { detail: { resource: res?.resource } }));
-    alert('Educational resource published successfully to DIPS Central Portal!');
-  };
-
-  if (loadingUser) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-400 font-mono">Initializing DIPS Centralized Portal...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in -> Render login page
-  if (!currentUser) {
-    return <LoginPage onLoginSuccess={setCurrentUser} />;
-  }
-
-  // Logged in -> Render Portal with role-specific views
-  const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'coordinator';
-  const isAdmin = currentUser.role === 'admin';
-  const isStudent = currentUser.role === 'student';
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col">
-      {/* Universal Header */}
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+      {/* Top Navbar */}
       <Navbar
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onQuickSwitchUser={handleQuickSwitchUser}
-        activeTab={activeNavTab}
-        setActiveTab={setActiveNavTab}
-        onPreviewResource={setPreviewResource}
-        onDownload={handleDownload}
+        currentTab={currentTab}
+        setCurrentTab={tab => {
+          setCurrentTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onSearchClick={() => setIsSearchOpen(true)}
       />
 
-      {/* Global School-Wide Announcement Banner */}
-      <GlobalAnnouncementBanner currentUser={currentUser} />
-
-      {/* Main Role-Specific View */}
+      {/* Main View Router */}
       <main className="flex-1">
-        {isAdmin && (
-          <AdminPortal
-            currentUser={currentUser}
-            onPreviewResource={setPreviewResource}
-            onViewVersions={setVersionModalResource}
-          />
-        )}
+        {/* Protected Feature Guard (For specialized private rooms/tests) */}
+        {!isAuthenticated && ['mytests', 'studyroom'].includes(currentTab) ? (
+          <div className="max-w-3xl mx-auto px-4 py-16 sm:py-24 text-center">
+            <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200 shadow-xs">
+                <Lock className="w-8 h-8 text-blue-600" />
+              </div>
 
-        {isTeacher && (
-          <TeacherPortal
-            currentUser={currentUser}
-            onUpdateUser={setCurrentUser}
-            onOpenUpload={(subId, clsId) => {
-              setUploadInitialSubjectId(subId);
-              setUploadInitialClassId(clsId);
-              setShowUploadModal(true);
-            }}
-            onPreviewResource={setPreviewResource}
-            onOpenVersions={setVersionModalResource}
-            onOpenCollaborate={setCollaborateResource}
-            onDownload={handleDownload}
-          />
-        )}
+              <div className="space-y-2">
+                <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+                  Student Login Required
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Sign In to Access Learning Content
+                </h1>
+                <p className="text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
+                  To access Class Notes, Online MCQ Tests, Practical Playgrounds, Question Banks, and PYQ Papers, please sign in with your student account or register for free.
+                </p>
+              </div>
 
-        {isStudent && (
-          <StudentPortal
-            currentUser={currentUser}
-            onPreviewResource={setPreviewResource}
-            onDownload={handleDownload}
-          />
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1 max-w-md mx-auto text-left">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <span>Free Student Access</span>
+                </p>
+                <p>
+                  Create your free profile to track quiz scores, earn topic badges, execute Python & SQL scripts, and access all CBSE board exam preparation materials.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => openAuthModal('login', 'Please sign in or register to access student learning resources.')}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In / Register Free</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCurrentTab('dashboard');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Return to Dashboard</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {currentTab === 'student-login' && (
+              <StudentLoginView
+                onBackHome={() => {
+                  setCurrentTab('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onLoginSuccess={() => {
+                  setCurrentTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSwitchToAdmin={() => openAuthModal('admin', 'Sign in with Administrator Credentials')}
+              />
+            )}
+
+            {currentTab === 'home' && (
+              <HomeView
+                setCurrentTab={tab => {
+                  setCurrentTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOpenMaterialReader={handleOpenMaterialReader}
+                onStartQuiz={handleStartQuiz}
+              />
+            )}
+
+            {(currentTab === 'lms' || currentTab === 'materials') && (
+              <ChapterLmsView
+                initialClass={selectedClassFilter !== 'ALL' ? selectedClassFilter : 'X'}
+                onNavigateHome={() => {
+                  setCurrentTab('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'examhall' && (
+              <LabExamPortalView
+                onBackToDashboard={() => {
+                  setCurrentTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOpenAdminPanel={() => {
+                  setCurrentTab('admin');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'quiz' && (
+              <QuizView
+                initialQuizToStart={quizToStartDirectly}
+                onClearInitialQuiz={() => setQuizToStartDirectly(null)}
+                onViewCertificate={attempt => setActiveCertificateAttempt(attempt)}
+                onNavigateToDashboard={() => {
+                  setCurrentTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'studyroom' && (
+              <StudyRoomView
+                initialRoomId={studyRoomToOpen}
+                onOpenStudyMaterial={() => {
+                  setCurrentTab('materials');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'dashboard' && (
+              <DashboardView
+                onOpenMaterial={handleOpenMaterialReader}
+                onViewCertificate={attempt => setActiveCertificateAttempt(attempt)}
+                onStartPracticeTopic={handleStartPracticeTopic}
+                onStartQuizClick={() => {
+                  setCurrentTab('quiz');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOpenStudyRoom={(roomId) => {
+                  setStudyRoomToOpen(roomId || null);
+                  setCurrentTab('studyroom');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'qbank' && <QuestionBankView onStartQuiz={handleStartQuiz} />}
+
+            {currentTab === 'about' && (
+              <AboutView
+                setCurrentTab={tab => {
+                  setCurrentTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {currentTab === 'contact' && <ContactView />}
+
+            {currentTab === 'admin' && (
+              userRole === 'admin' ? (
+                <AdminPanelView
+                  onBackToHome={() => {
+                    setCurrentTab('home');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              ) : (
+                <div className="max-w-2xl mx-auto px-4 py-16 sm:py-24 text-center">
+                  <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xl space-y-6">
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200 shadow-xs">
+                      <ShieldAlert className="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">
+                        Educator & Admin Access Restricted
+                      </span>
+                      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        Administrator CMS Access Required
+                      </h1>
+                      <p className="text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
+                        This area is reserved for Educator (Mr. Zakir Hussain) to upload Previous Year Papers, build live test series, manage student progress logs, and publish curriculum notes.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <button
+                        onClick={() => openAuthModal('admin', 'Sign in with Administrator Credentials')}
+                        className="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>Sign In as Admin</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCurrentTab('home');
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+                      >
+                        Return to Public Home
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+
+            {(['error', '402', '404', '500', 'offline'].includes(currentTab)) && (
+              <ErrorView
+                initialErrorCode={
+                  currentTab === '402' ? '402' :
+                  currentTab === '500' ? '500' :
+                  currentTab === 'offline' ? 'offline' : '404'
+                }
+                onNavigateHome={() => {
+                  setCurrentTab('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onRetry={() => {
+                  setCurrentTab('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+          </>
         )}
       </main>
 
-      {/* Global Modals */}
-      {previewResource && (
-        <ResourcePreviewModal
-          resource={previewResource}
-          currentUser={currentUser}
-          onClose={() => setPreviewResource(null)}
-          onDownload={handleDownload}
-          onOpenVersions={(res) => {
-            setVersionModalResource(res);
-          }}
-          canCollaborate={
-            isAdmin ||
-            (isTeacher && currentUser.assignedSubjectIds?.includes(previewResource.subjectId))
-          }
-          onCollaborate={(res) => {
-            setCollaborateResource(res);
-          }}
-          onResourceUpdated={(updatedRes) => {
-            setPreviewResource(updatedRes);
-          }}
+      {/* Global Footer */}
+      <Footer
+        setCurrentTab={tab => {
+          setCurrentTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Global Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectMaterial={handleOpenMaterialReader}
+        onSelectQuizTab={() => {
+          setCurrentTab('quiz');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Global Certificate Modal */}
+      {activeCertificateAttempt && (
+        <CertificateModal
+          attempt={activeCertificateAttempt}
+          studentName={studentProfile.name}
+          onClose={() => setActiveCertificateAttempt(null)}
         />
       )}
 
-      {versionModalResource && (
-        <VersionHistoryModal
-          resource={versionModalResource}
-          onClose={() => setVersionModalResource(null)}
-          onRestoreVersion={handleRestoreVersion}
-          canRestore={isAdmin}
-        />
-      )}
-
-      {collaborateResource && (
-        <NewVersionModal
-          resource={collaborateResource}
-          onClose={() => setCollaborateResource(null)}
-          onSubmit={handleAddVersionSubmit}
-        />
-      )}
-
-      {showUploadModal && (
-        <UploadResourceModal
-          currentUser={currentUser}
-          subjects={allSubjects}
-          classes={allClasses}
-          initialSubjectId={uploadInitialSubjectId}
-          initialClassId={uploadInitialClassId}
-          onClose={() => setShowUploadModal(false)}
-          onSubmit={handleCreateResourceSubmit}
-        />
-      )}
+      {/* Global Auth Modal for Login / Registration */}
+      <AuthModal />
     </div>
+  );
+};
+
+export default function App() {
+  return (
+    <AppProvider>
+      <MainLayout />
+    </AppProvider>
   );
 }
