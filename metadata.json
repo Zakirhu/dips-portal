@@ -1,6 +1,6 @@
 {
-  "name": "Zakir Learning Hub",
-  "description": "Computer Science • IT • IP • Typography | Class VI–XII study material, chapter-wise notes, practical resources, MCQs and online tests by Zakir Hussain.",
+  "name": "DIPS Centralized Learning & Content Sharing Portal",
+  "description": "Centralized learning management and subject-based content sharing platform for DIPS Chain of Institutions.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
