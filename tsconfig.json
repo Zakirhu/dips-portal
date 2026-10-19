@@ -19,18 +19,19 @@
     "paths": {
       "@/*": [
         "./*"
-      ],
-      "three128": [
-        "./node_modules/three"
-      ],
-      "@designcodeio/threeui": [
-        "./src/shaders/threeui-index.tsx"
-      ],
-      "@designcodeio/threeui/*": [
-        "./src/shaders/*"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src",
+    "server.ts",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "skills",
+    "dist"
+  ]
 }

@@ -6,25 +6,14 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
-    define: {
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(
-        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
-      ),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
-        process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
-      ),
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        'three128': path.resolve(__dirname, 'node_modules/three'),
-        '@designcodeio/threeui/style.css': path.resolve(__dirname, 'src/shaders/threeui.css'),
-        '@designcodeio/threeui': path.resolve(__dirname, 'src/shaders/threeui-index.tsx'),
       },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
